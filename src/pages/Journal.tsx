@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Settings, Trash2 } from 'lucide-react';
+import { Plus, Settings, Trash2, X } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { DataTable } from '../components/ui/DataTable';
 import { ErrorState } from '../components/ui/ErrorState';
@@ -46,6 +46,12 @@ const inputBase =
   'h-10 rounded-md border border-sand-300 bg-white px-3 text-sm text-base-black placeholder:text-grey-400 focus:border-assistant-dark focus:outline-none focus:ring-2 focus:ring-assistant-dark/20';
 
 const groups = ['Attendance', 'Performance', 'Development', 'Operational'];
+const journalDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC'
+});
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -95,6 +101,21 @@ function groupCategories(rows: JournalCategoryRow[]): Array<[string, JournalCate
   return Array.from(byGroup.entries());
 }
 
+function toJournalDate(value: string): Date | null {
+  const normalized = value.trim();
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
+    ? new Date(`${normalized}T00:00:00Z`)
+    : new Date(normalized);
+  if (Number.isNaN(dateOnly.getTime())) return null;
+  return dateOnly;
+}
+
+function formatJournalDate(value: string): string {
+  const parsed = toJournalDate(value);
+  if (!parsed) return value;
+  return journalDateFormatter.format(parsed);
+}
+
 export function Journal() {
   const queryClient = useQueryClient();
   const assistants = useAssistants();
@@ -108,6 +129,9 @@ export function Journal() {
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [journalError, setJournalError] = useState<string | null>(null);
+  const [selectedAssistantId, setSelectedAssistantId] = useState<string | null>(null);
+  const [showAssistantModal, setShowAssistantModal] = useState(false);
+  const [showModalAddEntry, setShowModalAddEntry] = useState(false);
 
   const [entryForm, setEntryForm] = useState(() => ({
     assistant_id: '',
@@ -130,6 +154,12 @@ export function Journal() {
   const range = useMemo(defaultDateRange, []);
   const [fromDate, setFromDate] = useState(range.from);
   const [toDate, setToDate] = useState(range.to);
+  const [modalEntryForm, setModalEntryForm] = useState(() => ({
+    entry_date: toDateInputValue(new Date()),
+    category_id: '',
+    title: '',
+    notes: ''
+  }));
 
   const journalFilters = useMemo<JournalEntryFilters>(
     () => ({
@@ -142,6 +172,18 @@ export function Journal() {
   );
 
   const entries = useJournalEntries(journalFilters);
+  const assistantModalFilters = useMemo<JournalEntryFilters>(
+    () => ({
+      assistant_id: selectedAssistantId,
+      category_id: null,
+      from: null,
+      to: null
+    }),
+    [selectedAssistantId]
+  );
+  const assistantModalEntries = useJournalEntries(assistantModalFilters, {
+    enabled: showAssistantModal && Boolean(selectedAssistantId)
+  });
 
   const insertEntryMutation = useInsertJournalEntry();
   const deleteEntryMutation = useDeleteJournalEntry();
@@ -165,6 +207,20 @@ export function Journal() {
     setCategoryDrafts(next);
   }, [allCategories.data]);
 
+  useEffect(() => {
+    if (!showAssistantModal) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowAssistantModal(false);
+        setShowModalAddEntry(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showAssistantModal]);
+
   const assistantOptions = assistants.data ?? [];
   const activeCategoryOptions = activeCategories.data ?? [];
   const allCategoryRows = allCategories.data ?? [];
@@ -180,6 +236,10 @@ export function Journal() {
   );
 
   const summaryRows = (summary.data ?? []).filter((row) => row.assistant_type === 'FOH');
+  const selectedAssistant =
+    selectedAssistantId == null
+      ? null
+      : summaryRows.find((row) => row.assistant_id === selectedAssistantId) ?? null;
 
   const refreshJournalData = async () => {
     await Promise.all([
@@ -334,6 +394,54 @@ export function Journal() {
     return Array.from(set);
   }, [allCategoryRows]);
 
+  const openAssistantModal = (assistantId: string) => {
+    setSelectedAssistantId(assistantId);
+    setShowAssistantModal(true);
+    setShowModalAddEntry(false);
+    setModalEntryForm({
+      entry_date: toDateInputValue(new Date()),
+      category_id: '',
+      title: '',
+      notes: ''
+    });
+  };
+
+  const closeAssistantModal = () => {
+    setShowAssistantModal(false);
+    setShowModalAddEntry(false);
+  };
+
+  const onAddModalEntry = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setJournalError(null);
+
+    if (!selectedAssistant || !modalEntryForm.category_id || !modalEntryForm.title.trim()) {
+      setJournalError('Category and title are required.');
+      return;
+    }
+
+    try {
+      await insertEntryMutation.mutateAsync({
+        assistant_id: selectedAssistant.assistant_id,
+        assistant_name: selectedAssistant.assistant_name,
+        entry_date: modalEntryForm.entry_date,
+        category_id: Number(modalEntryForm.category_id),
+        title: modalEntryForm.title.trim(),
+        notes: modalEntryForm.notes.trim() ? modalEntryForm.notes.trim() : null
+      });
+      await refreshJournalData();
+      setShowModalAddEntry(false);
+      setModalEntryForm({
+        entry_date: toDateInputValue(new Date()),
+        category_id: '',
+        title: '',
+        notes: ''
+      });
+    } catch {
+      setJournalError('Failed to save journal entry.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border-l-4 border-l-assistant-dark border border-sand-300 bg-white p-5 shadow-sm">
@@ -406,9 +514,11 @@ export function Journal() {
                   ].filter((item) => item.value > 0);
 
                   return (
-                    <article
+                    <button
+                      type="button"
                       key={row.assistant_id}
-                      className="rounded-lg border border-sand-300 bg-white p-4 shadow-sm"
+                      onClick={() => openAssistantModal(row.assistant_id)}
+                      className="rounded-lg border border-sand-300 bg-white p-4 text-left shadow-sm transition hover:bg-sand-100"
                     >
                       <div className="text-base font-semibold text-base-black">{row.assistant_name}</div>
                       <div className="mt-1 text-sm text-grey-400">
@@ -428,7 +538,7 @@ export function Journal() {
                           <span className="text-xs text-grey-400">No grouped entries in last 30 days.</span>
                         )}
                       </div>
-                    </article>
+                    </button>
                   );
                 })}
               </div>
@@ -619,8 +729,8 @@ export function Journal() {
                     key: 'date',
                     header: 'Date',
                     sortable: true,
-                    value: (row) => row.entry_date,
-                    render: (row) => row.entry_date
+                    value: (row) => toJournalDate(row.entry_date)?.getTime() ?? 0,
+                    render: (row) => formatJournalDate(row.entry_date)
                   },
                   {
                     key: 'assistant',
@@ -907,6 +1017,178 @@ export function Journal() {
             ))
           )}
         </section>
+      )}
+
+      {showAssistantModal && selectedAssistant && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+          onClick={closeAssistantModal}
+        >
+          <section
+            className="max-h-[90vh] w-full max-w-[800px] overflow-y-auto rounded-xl border border-sand-300 bg-white shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="sticky top-0 z-10 border-b border-sand-300 bg-white px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-bold text-base-black">{selectedAssistant.assistant_name}</h3>
+                  <p className="mt-1 text-sm text-grey-400">
+                    {selectedAssistant.total_entries} total journal entries
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowModalAddEntry((prev) => !prev)}
+                    className="inline-flex items-center gap-1 rounded-md border border-sand-300 bg-white px-3 py-2 text-sm font-medium text-base-black hover:bg-sand-100"
+                  >
+                    <Plus size={14} />
+                    Add Entry
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeAssistantModal}
+                    className="rounded-md border border-sand-300 p-2 text-grey-400 hover:bg-sand-100 hover:text-base-black"
+                    aria-label="Close assistant journal modal"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <div className="space-y-4 p-5">
+              {showModalAddEntry && (
+                <form
+                  onSubmit={onAddModalEntry}
+                  className="grid grid-cols-1 gap-3 rounded-lg border border-sand-300 bg-sand-100 p-4 md:grid-cols-2"
+                >
+                  <input
+                    type="text"
+                    value={selectedAssistant.assistant_name}
+                    readOnly
+                    className={`${inputBase} bg-sand-200`}
+                  />
+                  <input
+                    required
+                    type="date"
+                    className={inputBase}
+                    value={modalEntryForm.entry_date}
+                    onChange={(event) =>
+                      setModalEntryForm((prev) => ({ ...prev, entry_date: event.target.value }))
+                    }
+                  />
+                  <select
+                    required
+                    className={selectBase}
+                    value={modalEntryForm.category_id}
+                    onChange={(event) =>
+                      setModalEntryForm((prev) => ({ ...prev, category_id: event.target.value }))
+                    }
+                  >
+                    <option value="">Select Category</option>
+                    {groupedActiveCategories.map(([groupName, rows]) => (
+                      <optgroup key={groupName} label={groupName}>
+                        {rows.map((category) => (
+                          <option key={category.id} value={String(category.id)}>
+                            {category.emoji} {category.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Title"
+                    className={inputBase}
+                    value={modalEntryForm.title}
+                    onChange={(event) =>
+                      setModalEntryForm((prev) => ({ ...prev, title: event.target.value }))
+                    }
+                  />
+                  <textarea
+                    placeholder="Notes (optional)"
+                    className="min-h-24 rounded-md border border-sand-300 bg-white px-3 py-2 text-sm text-base-black placeholder:text-grey-400 focus:border-assistant-dark focus:outline-none focus:ring-2 focus:ring-assistant-dark/20 md:col-span-2"
+                    value={modalEntryForm.notes}
+                    onChange={(event) =>
+                      setModalEntryForm((prev) => ({ ...prev, notes: event.target.value }))
+                    }
+                  />
+                  <div className="flex gap-2 md:col-span-2">
+                    <button
+                      type="submit"
+                      className="rounded-md bg-base-black px-3 py-2 text-sm font-semibold text-white hover:opacity-90"
+                      disabled={insertEntryMutation.isPending}
+                    >
+                      {insertEntryMutation.isPending ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-sand-300 bg-white px-3 py-2 text-sm text-base-black hover:bg-sand-100"
+                      onClick={() => setShowModalAddEntry(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {assistantModalEntries.isLoading ? (
+                <SkeletonTable rows={5} cols={3} />
+              ) : assistantModalEntries.error ? (
+                <ErrorState
+                  message="Failed to load assistant journal entries."
+                  onRetry={() => assistantModalEntries.refetch()}
+                />
+              ) : (assistantModalEntries.data ?? []).length === 0 ? (
+                <div className="rounded-lg border border-sand-300 bg-sand-100 px-4 py-8 text-center text-sm text-grey-400">
+                  No journal entries yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {(assistantModalEntries.data ?? []).map((entry) => (
+                    <article
+                      key={entry.id}
+                      className="rounded-lg border border-sand-300 bg-sand-100 p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm text-grey-400">
+                            {formatJournalDate(entry.entry_date)}
+                          </span>
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+                            style={{
+                              color: normalizeHex(entry.category_colour),
+                              backgroundColor: hexToRgba(entry.category_colour, 0.1),
+                              border: `1px solid ${hexToRgba(entry.category_colour, 0.3)}`
+                            }}
+                          >
+                            <span>{entry.category_emoji}</span>
+                            <span>{entry.category_name}</span>
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void onDeleteEntry(entry.id)}
+                          className="inline-flex items-center gap-1 rounded-md border border-sand-300 bg-white px-2 py-1 text-xs text-status-red hover:bg-status-red-light"
+                        >
+                          <Trash2 size={12} />
+                          Delete
+                        </button>
+                      </div>
+                      <h4 className="mt-3 text-sm font-semibold text-base-black">{entry.title}</h4>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-base-black">
+                        {entry.notes?.trim() ? entry.notes : 'No notes provided.'}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

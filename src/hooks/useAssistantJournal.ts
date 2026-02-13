@@ -15,6 +15,10 @@ export interface JournalEntryFilters {
   to?: string | null;
 }
 
+interface UseJournalEntriesOptions {
+  enabled?: boolean;
+}
+
 export interface InsertJournalEntryInput {
   assistant_id: string;
   assistant_name: string;
@@ -54,11 +58,17 @@ function mapJournalCategoryRow(row: Record<string, unknown>): JournalCategoryRow
 }
 
 function mapJournalEntryRow(row: Record<string, unknown>): AssistantJournalEntryRow {
+  const entryDate = row.entry_date;
+  const lastEntry =
+    entryDate instanceof Date
+      ? entryDate.toISOString().slice(0, 10)
+      : toStringValue(entryDate);
+
   return {
     id: toNumber(row.id),
     assistant_id: toStringValue(row.assistant_id),
     assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
-    entry_date: toStringValue(row.entry_date),
+    entry_date: lastEntry,
     category_id: toNumber(row.category_id),
     title: toStringValue(row.title),
     notes: row.notes == null ? null : toStringValue(row.notes),
@@ -73,6 +83,14 @@ function mapJournalEntryRow(row: Record<string, unknown>): AssistantJournalEntry
 }
 
 function mapJournalSummaryRow(row: Record<string, unknown>): AssistantJournalSummaryRow {
+  const lastEntryDate = row.last_entry_date;
+  const normalizedLastEntryDate =
+    lastEntryDate instanceof Date
+      ? lastEntryDate.toISOString().slice(0, 10)
+      : lastEntryDate == null
+        ? null
+        : toStringValue(lastEntryDate);
+
   return {
     assistant_id: toStringValue(row.assistant_id),
     assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
@@ -83,7 +101,7 @@ function mapJournalSummaryRow(row: Record<string, unknown>): AssistantJournalSum
     development_30d: toNumber(row.development_30d),
     operational_30d: toNumber(row.operational_30d),
     total_entries: toNumber(row.total_entries),
-    last_entry_date: row.last_entry_date == null ? null : toStringValue(row.last_entry_date)
+    last_entry_date: normalizedLastEntryDate
   };
 }
 
@@ -213,10 +231,14 @@ export async function deactivateCategory(id: number): Promise<void> {
   `;
 }
 
-export function useJournalEntries(filters: JournalEntryFilters) {
+export function useJournalEntries(
+  filters: JournalEntryFilters,
+  options?: UseJournalEntriesOptions
+) {
   return useQuery<AssistantJournalEntryRow[]>({
     queryKey: ['assistant_journal_entries', filters],
-    queryFn: () => fetchJournalEntries(filters)
+    queryFn: () => fetchJournalEntries(filters),
+    enabled: options?.enabled ?? true
   });
 }
 

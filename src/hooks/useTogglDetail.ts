@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toDisplayAssistantName } from '../lib/displayName';
 import { toNumber, toStringValue } from '../lib/normalize';
 import { sql } from '../lib/neon';
 import { TogglDetailRow } from '../types';
@@ -32,7 +33,7 @@ export function useTogglDetail(filters: FilterState) {
         family_id: toStringValue(row.family_id),
         family_name: toStringValue(row.family_name),
         assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toStringValue(row.assistant_name),
+        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
         category: row.category == null ? null : toStringValue(row.category),
         minutes: toNumber(row.duration_minutes ?? row.minutes),
         entry_date: toStringValue(row.entry_date)

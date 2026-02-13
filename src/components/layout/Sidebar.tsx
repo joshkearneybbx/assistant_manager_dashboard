@@ -1,4 +1,4 @@
-import { BarChart3, Clock3, Gauge, HeartPulse, Home, PanelLeftClose, PanelLeftOpen, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Clock3, Gauge, HeartPulse, Home, PanelLeftClose, PanelLeftOpen, Users } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 interface SidebarProps {
@@ -10,6 +10,7 @@ interface SidebarProps {
 const navItems = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/performance', label: 'Team', icon: Users },
+  { to: '/journal', label: 'Journal', icon: BookOpen },
   { to: '/capacity', label: 'Capacity', icon: Gauge },
   { to: '/clients', label: 'Clients', icon: HeartPulse },
   { to: '/stuck-tasks', label: 'Stuck', icon: Clock3 }

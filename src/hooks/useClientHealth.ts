@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toDisplayAssistantName } from '../lib/displayName';
 import { toNumber, toStringValue } from '../lib/normalize';
 import { sql } from '../lib/neon';
 import { ClientHealthRow } from '../types';
@@ -45,12 +46,15 @@ export function useClientHealth(filters: FilterState) {
         family_id: toStringValue(row.family_id),
         family_name: toStringValue(row.family_name),
         assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toStringValue(row.assistant_name),
+        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
         contract: row.contract == null ? null : toStringValue(row.contract),
         subscription_type:
           row.subscription_type == null
             ? (row.contract == null ? null : toStringValue(row.contract))
             : toStringValue(row.subscription_type),
+        life_transitions: row.life_transitions == null ? null : toStringValue(row.life_transitions),
+        life_transition_icons:
+          row.life_transition_icons == null ? null : toStringValue(row.life_transition_icons),
         active_tasks: toNumber(row.active_tasks),
         days_since_last_task: toNumber(row.days_since_last_task),
         health_status: toStringValue(row.health_status, 'Green') as ClientHealthRow['health_status']

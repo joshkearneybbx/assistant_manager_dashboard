@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toDisplayAssistantName } from '../lib/displayName';
 import { toStringValue } from '../lib/normalize';
 import { sql } from '../lib/neon';
 import { TaskDetailRow } from '../types';
@@ -32,7 +33,7 @@ export function useTasksDetail(filters: FilterState) {
         family_id: toStringValue(row.family_id),
         family_name: toStringValue(row.family_name),
         assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toStringValue(row.assistant_name),
+        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
         task_title: toStringValue(row.task_title),
         category: row.category == null ? null : toStringValue(row.category),
         closed_date: row.closed_date == null ? null : toStringValue(row.closed_date),

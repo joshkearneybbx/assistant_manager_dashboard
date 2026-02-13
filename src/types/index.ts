@@ -15,6 +15,8 @@ export interface ClientHealthRow {
   assistant_name: string;
   contract: string | null;
   subscription_type?: string | null;
+  life_transitions?: string | null;
+  life_transition_icons?: string | null;
   active_tasks: number;
   days_since_last_task: number;
   health_status: HealthStatus;
@@ -103,4 +105,44 @@ export interface FamilyRow {
   family_name: string;
   is_active?: boolean;
   contract?: string | null;
+}
+
+export interface JournalCategoryRow {
+  id: number;
+  name: string;
+  group_name: string;
+  emoji: string;
+  colour: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface AssistantJournalEntryRow {
+  id: number;
+  assistant_id: string;
+  assistant_name: string;
+  entry_date: string;
+  category_id: number;
+  title: string;
+  notes: string | null;
+  logged_by: string | null;
+  created_at: string;
+  updated_at: string;
+  category_name: string;
+  category_emoji: string;
+  category_colour: string;
+  category_group_name: string;
+}
+
+export interface AssistantJournalSummaryRow {
+  assistant_id: string;
+  assistant_name: string;
+  assistant_type: string;
+  entries_last_30d: number;
+  attendance_30d: number;
+  performance_30d: number;
+  development_30d: number;
+  operational_30d: number;
+  total_entries: number;
+  last_entry_date: string | null;
 }

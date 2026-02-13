@@ -110,7 +110,23 @@ export function Clients() {
                 );
               }}
               columns={[
-                { key: 'client', header: 'Client', render: (row) => row.family_name, sortable: true, value: (row) => row.family_name },
+                {
+                  key: 'client',
+                  header: 'Client',
+                  render: (row) => (
+                    <div className="flex items-center gap-2">
+                      <span>{row.family_name}</span>
+                      {row.life_transitions ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-sand-300 bg-sand-100 px-2 py-0.5 text-xs text-base-black">
+                          {row.life_transition_icons ? <span>{row.life_transition_icons}</span> : null}
+                          <span>{row.life_transitions}</span>
+                        </span>
+                      ) : null}
+                    </div>
+                  ),
+                  sortable: true,
+                  value: (row) => row.family_name
+                },
                 { key: 'assistant', header: 'Assistant', render: (row) => row.assistant_name, sortable: true, value: (row) => row.assistant_name },
                 { key: 'plan', header: 'Plan', render: (row) => row.subscription_type ?? row.contract ?? '-' },
                 { key: 'active', header: 'Active Tasks', render: (row) => row.active_tasks, sortable: true, value: (row) => row.active_tasks },

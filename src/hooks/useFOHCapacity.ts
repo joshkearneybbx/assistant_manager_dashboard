@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toDisplayAssistantName } from '../lib/displayName';
 import { toNumber, toStringValue } from '../lib/normalize';
 import { sql } from '../lib/neon';
 import { FohCapacityRow } from '../types';
@@ -24,7 +25,7 @@ export function useFOHCapacity(filters: FilterState) {
 
       return rawRows.map((row) => ({
         assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toStringValue(row.assistant_name),
+        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
         current_clients: toNumber(row.current_clients),
         base_capacity: toNumber(row.base_capacity),
         max_capacity: toNumber(row.max_capacity),

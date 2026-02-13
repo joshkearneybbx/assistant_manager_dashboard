@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toDisplayAssistantName } from '../lib/displayName';
 import { toNumber, toStringValue } from '../lib/normalize';
 import { sql } from '../lib/neon';
 import { FohPerformanceRow } from '../types';
@@ -26,7 +27,7 @@ export function useFOHPerformance(filters: FilterState) {
 
       return rawRows.map((row) => ({
         assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toStringValue(row.assistant_name),
+        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
         tasks_completed: toNumber(row.tasks_completed),
         active_tasks: toNumber(row.active_tasks),
         avg_mins_per_task: toNumber(row.avg_mins_per_task),

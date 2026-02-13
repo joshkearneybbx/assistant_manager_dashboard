@@ -5,6 +5,7 @@ import { Performance } from './pages/Performance';
 import { Capacity } from './pages/Capacity';
 import { Clients } from './pages/Clients';
 import { StuckTasks } from './pages/StuckTasks';
+import { Journal } from './pages/Journal';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/capacity" element={<Capacity />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/stuck-tasks" element={<StuckTasks />} />
+        <Route path="/journal" element={<Journal />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

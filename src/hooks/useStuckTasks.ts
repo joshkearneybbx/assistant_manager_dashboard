@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toDisplayAssistantName } from '../lib/displayName';
 import { toNumber, toStringValue } from '../lib/normalize';
 import { sql } from '../lib/neon';
 import { StuckTaskRow } from '../types';
@@ -69,7 +70,7 @@ export function useStuckTasks(filters: FilterState, taskStatus: string = 'all') 
         family_id: toStringValue(row.family_id),
         family_name: toStringValue(row.family_name),
         assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toStringValue(row.assistant_name),
+        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
         days_since_update: toNumber(row.days_since_update ?? row.days_open),
         task_state: toStringValue(row.task_state),
         task_status: toStringValue(row.task_status ?? row.task_state),

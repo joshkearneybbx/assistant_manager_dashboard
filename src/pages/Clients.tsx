@@ -10,6 +10,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { useClientHealth } from '../hooks/useClientHealth';
 import { useClientTimeBreakdown } from '../hooks/useClientTimeBreakdown';
 import { useClientTimeTotals } from '../hooks/useClientTimeTotals';
+import { useRecentClientTasks } from '../hooks/useRecentClientTasks';
 import { useTasksDetail } from '../hooks/useTasksDetail';
 import { UseFiltersResult } from '../hooks/useFilters';
 import { daysAgo, formatDuration } from '../lib/format';
@@ -21,6 +22,29 @@ function toSubcategoryLabel(value: string | null): string {
   return (parts[parts.length - 1] ?? withoutEmojiPrefix).trim() || 'Uncategorized';
 }
 
+function parseCategoryBadge(value: string | null): { emoji: string; label: string } {
+  if (!value) return { emoji: '🏷️', label: 'Uncategorized' };
+  const emojiMatch = value.match(/^[^A-Za-z0-9]+/);
+  const emoji = emojiMatch?.[0]?.trim() || '🏷️';
+  return {
+    emoji,
+    label: toSubcategoryLabel(value)
+  };
+}
+
+const recentTaskDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC'
+});
+
+function toTaskDateLabel(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return recentTaskDateFormatter.format(parsed);
+}
+
 export function Clients() {
   const filtersApi = useOutletContext<UseFiltersResult>();
   const [expandedFamilyId, setExpandedFamilyId] = useState<string | null>(null);
@@ -29,6 +53,7 @@ export function Clients() {
   const tasks = useTasksDetail(filtersApi.filters);
   const timeTotals = useClientTimeTotals(filtersApi.filters);
   const breakdown = useClientTimeBreakdown(filtersApi.filters, expandedFamilyId ?? undefined);
+  const recentTasks = useRecentClientTasks(expandedFamilyId ?? undefined);
 
   const isLoading = clients.isLoading || tasks.isLoading || timeTotals.isLoading;
   const hasError = clients.error || tasks.error || timeTotals.error;
@@ -117,6 +142,9 @@ export function Clients() {
                   .map(([category, count]) => ({ category, count }))
                   .sort((a, b) => b.count - a.count);
 
+                const clientRecentTasks =
+                  expandedFamilyId === row.family_id ? (recentTasks.data ?? []) : [];
+
                 return (
                   <div className="max-h-[70vh] space-y-4 overflow-y-auto p-2">
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -148,6 +176,63 @@ export function Clients() {
                             <div className="px-3 py-3 text-sm text-grey-400">No tasks in selected period.</div>
                           )}
                         </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="mb-2 text-sm font-semibold text-base-black">Recent Tasks</h3>
+                      <div className="space-y-2">
+                        {expandedFamilyId === row.family_id && recentTasks.isLoading ? (
+                          <div className="rounded-md border border-sand-300 bg-sand-100 px-3 py-3 text-sm text-grey-400">
+                            Loading recent tasks...
+                          </div>
+                        ) : expandedFamilyId === row.family_id && recentTasks.error ? (
+                          <div className="rounded-md border border-sand-300 bg-sand-100 px-3 py-3 text-sm text-status-red">
+                            Failed to load recent tasks.
+                          </div>
+                        ) : clientRecentTasks.length ? (
+                          clientRecentTasks.map((task, index) => {
+                            const category = parseCategoryBadge(task.category);
+                            const isClosed = Boolean(task.closed_at);
+                            const status = isClosed ? 'Closed' : 'Open';
+                            const dateLabel = isClosed
+                              ? toTaskDateLabel(task.closed_at as string)
+                              : toTaskDateLabel(task.created_at);
+
+                            return (
+                              <article
+                                key={`${task.title}-${task.created_at}-${index}`}
+                                className="rounded-md border border-sand-300 bg-white px-3 py-2"
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="text-sm font-semibold text-base-black">{task.title}</div>
+                                  <div className="inline-flex items-center gap-2 text-xs">
+                                    <span
+                                      className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${
+                                        isClosed
+                                          ? 'border-sand-300 bg-sand-100 text-grey-400'
+                                          : 'border-status-green bg-status-green-light text-status-green'
+                                      }`}
+                                    >
+                                      {status}
+                                    </span>
+                                    <span className="text-grey-400">{dateLabel}</span>
+                                  </div>
+                                </div>
+                                <div className="mt-1">
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-sand-300 bg-sand-100 px-2 py-0.5 text-xs font-medium text-base-black">
+                                    <span>{category.emoji}</span>
+                                    <span>{category.label}</span>
+                                  </span>
+                                </div>
+                              </article>
+                            );
+                          })
+                        ) : (
+                          <div className="rounded-md border border-sand-300 bg-sand-100 px-3 py-3 text-sm text-grey-400">
+                            No recent tasks found.
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

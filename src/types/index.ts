@@ -71,6 +71,14 @@ export interface TaskDetailRow {
   created_at: string;
 }
 
+export interface RecentClientTaskRow {
+  title: string;
+  category: string | null;
+  task_state: string;
+  created_at: string;
+  closed_at: string | null;
+}
+
 export interface TogglDetailRow {
   entry_id: string;
   family_id: string;

@@ -14,6 +14,13 @@ import { useTasksDetail } from '../hooks/useTasksDetail';
 import { UseFiltersResult } from '../hooks/useFilters';
 import { daysAgo, formatDuration } from '../lib/format';
 
+function toSubcategoryLabel(value: string | null): string {
+  if (!value) return 'Uncategorized';
+  const withoutEmojiPrefix = value.replace(/^[^A-Za-z0-9]+/, '').trim();
+  const parts = withoutEmojiPrefix.split(/\s-\s/);
+  return (parts[parts.length - 1] ?? withoutEmojiPrefix).trim() || 'Uncategorized';
+}
+
 export function Clients() {
   const filtersApi = useOutletContext<UseFiltersResult>();
   const [expandedFamilyId, setExpandedFamilyId] = useState<string | null>(null);
@@ -89,22 +96,59 @@ export function Clients() {
               onRowClick={(row) => setExpandedFamilyId((prev) => (prev === row.family_id ? null : row.family_id))}
               expandedRowKey={expandedFamilyId}
               renderExpanded={(row) => {
-                const recentTasks = (tasks.data ?? []).filter((task) => task.family_id === row.family_id).slice(0, 5);
+                const clientTasks = (tasks.data ?? []).filter((task) => task.family_id === row.family_id);
+                const timeBySubcategory = (breakdown.data ?? []).reduce<Record<string, number>>((acc, entry) => {
+                  const key = toSubcategoryLabel(entry.category);
+                  acc[key] = (acc[key] ?? 0) + entry.minutes;
+                  return acc;
+                }, {});
+
+                const chartData = Object.entries(timeBySubcategory)
+                  .map(([category, minutes]) => ({ family_id: row.family_id, category, minutes }))
+                  .sort((a, b) => b.minutes - a.minutes);
+
+                const tasksByCategory = Object.entries(
+                  clientTasks.reduce<Record<string, number>>((acc, task) => {
+                    const key = toSubcategoryLabel(task.category);
+                    acc[key] = (acc[key] ?? 0) + 1;
+                    return acc;
+                  }, {})
+                )
+                  .map(([category, count]) => ({ category, count }))
+                  .sort((a, b) => b.count - a.count);
+
                 return (
-                  <div className="space-y-4 p-2">
-                    <div>
-                      <h3 className="mb-2 text-sm font-semibold text-base-black">Time by Category</h3>
-                      {breakdown.isLoading ? (
-                        <div className="text-sm text-grey-400">Loading breakdown...</div>
-                      ) : (
-                        <CategoryBreakdown data={breakdown.data ?? []} />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="mb-2 text-sm font-semibold text-base-black">Recent Tasks</h3>
-                      <ul className="space-y-1 text-sm text-base-black">
-                        {recentTasks.length ? recentTasks.map((task) => <li key={task.task_id}>{task.task_title}</li>) : <li className="text-grey-400">No recent tasks.</li>}
-                      </ul>
+                  <div className="max-h-[70vh] space-y-4 overflow-y-auto p-2">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div>
+                        <h3 className="mb-2 text-sm font-semibold text-base-black">Time by Category</h3>
+                        {breakdown.isLoading ? (
+                          <div className="text-sm text-grey-400">Loading breakdown...</div>
+                        ) : (
+                          <CategoryBreakdown data={chartData} height={120} xAxisAngle={-45} />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="mb-2 text-sm font-semibold text-base-black">Tasks by Category</h3>
+                        <div className="overflow-hidden rounded-md border border-sand-300 bg-white">
+                          <div className="grid grid-cols-[1fr_auto] border-b border-sand-300 bg-sand-100 px-3 py-2 text-xs font-semibold text-grey-400">
+                            <span>Category</span>
+                            <span>Tasks</span>
+                          </div>
+                          {tasksByCategory.length ? (
+                            <ul className="divide-y divide-sand-300">
+                              {tasksByCategory.map((entry) => (
+                                <li key={entry.category} className="grid grid-cols-[1fr_auto] px-3 py-2 text-sm text-base-black">
+                                  <span className="pr-2">{entry.category}</span>
+                                  <span className="tabular-nums">{entry.count}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="px-3 py-3 text-sm text-grey-400">No tasks in selected period.</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

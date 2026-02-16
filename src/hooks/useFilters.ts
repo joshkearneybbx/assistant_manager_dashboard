@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export type TimePeriod =
+  | 'all_time'
   | 'last_7_days'
   | 'this_week'
   | 'last_week'
@@ -93,6 +94,10 @@ export function computeDateRange(filters: FilterState): { from: string; to: stri
   const from = new Date(to);
 
   switch (filters.period) {
+    case 'all_time': {
+      from.setFullYear(1970, 0, 1);
+      break;
+    }
     case 'this_week': {
       const day = to.getDay();
       const mondayOffset = day === 0 ? -6 : 1 - day;

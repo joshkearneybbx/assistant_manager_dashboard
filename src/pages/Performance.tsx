@@ -14,13 +14,17 @@ import { formatDuration } from '../lib/format';
 export function Performance() {
   const filtersApi = useOutletContext<UseFiltersResult>();
   const [expandedAssistantId, setExpandedAssistantId] = useState<string | null>(null);
+  const detailFilters = {
+    ...filtersApi.filters,
+    assistant: expandedAssistantId ? [expandedAssistantId] : []
+  };
 
   const performance = useFOHPerformance(filtersApi.filters);
-  const clients = useClientHealth(filtersApi.filters);
-  const toggl = useTogglDetail(filtersApi.filters);
+  const clients = useClientHealth(detailFilters, { enabled: Boolean(expandedAssistantId) });
+  const toggl = useTogglDetail(detailFilters, { enabled: Boolean(expandedAssistantId) });
 
-  const isLoading = performance.isLoading || clients.isLoading || toggl.isLoading;
-  const hasError = performance.error || clients.error || toggl.error;
+  const isLoading = performance.isLoading;
+  const hasError = performance.error;
 
   const clientByAssistant = (clients.data ?? []).reduce<Record<string, string[]>>((acc, row) => {
     const label = `${row.family_name} (${row.health_status})`;
@@ -51,8 +55,10 @@ export function Performance() {
           message="Failed to load performance data."
           onRetry={() => {
             performance.refetch();
-            clients.refetch();
-            toggl.refetch();
+            if (expandedAssistantId) {
+              clients.refetch();
+              toggl.refetch();
+            }
           }}
         />
       )}
@@ -72,10 +78,16 @@ export function Performance() {
             renderExpanded={(row) => (
               <div className="space-y-2 p-2">
                 <div className="text-sm text-base-black">
-                  <span className="font-semibold">Clients:</span> {(clientByAssistant[row.assistant_id] ?? []).join(', ') || 'No clients'}
+                  <span className="font-semibold">Clients:</span>{' '}
+                  {expandedAssistantId === row.assistant_id && clients.isLoading
+                    ? 'Loading...'
+                    : (clientByAssistant[row.assistant_id] ?? []).join(', ') || 'No clients'}
                 </div>
                 <div className="text-sm text-base-black">
-                  <span className="font-semibold">Total time in period:</span> {formatDuration(minsByAssistant[row.assistant_id] ?? 0)}
+                  <span className="font-semibold">Total time in period:</span>{' '}
+                  {expandedAssistantId === row.assistant_id && toggl.isLoading
+                    ? 'Loading...'
+                    : formatDuration(minsByAssistant[row.assistant_id] ?? 0)}
                 </div>
               </div>
             )}

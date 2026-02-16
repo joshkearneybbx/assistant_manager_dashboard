@@ -4,31 +4,57 @@ import { ClientTimeBreakdownRow } from '../../types';
 
 interface CategoryBreakdownProps {
   data: ClientTimeBreakdownRow[];
+  height?: number;
+  formatCategoryLabel?: (label: string) => string;
+  xAxisAngle?: number;
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+  formatCategoryLabel
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number }>;
+  label?: string;
+  formatCategoryLabel: (value: string) => string;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-sand-300 bg-white px-3 py-2 shadow-sm">
-      <div className="text-xs font-medium text-base-black">{label}</div>
+      <div className="text-xs font-medium text-base-black">{formatCategoryLabel(label ?? '')}</div>
       <div className="mt-0.5 text-sm tabular-nums text-grey-400">{formatDuration(Number(payload[0].value))}</div>
     </div>
   );
 }
 
-export function CategoryBreakdown({ data }: CategoryBreakdownProps) {
+export function CategoryBreakdown({
+  data,
+  height = 150,
+  formatCategoryLabel = (label) => label,
+  xAxisAngle = -30
+}: CategoryBreakdownProps) {
   if (!data.length) {
     return <div className="text-sm text-grey-400">No time data for this period.</div>;
   }
 
   return (
-    <div className="h-56 w-full">
+    <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E8E5E0" />
-          <XAxis dataKey="category" tick={{ fill: '#696968', fontSize: 12 }} interval={0} angle={-30} textAnchor="end" height={50} />
+          <XAxis
+            dataKey="category"
+            tick={{ fill: '#696968', fontSize: 11 }}
+            tickFormatter={formatCategoryLabel}
+            interval={0}
+            angle={xAxisAngle}
+            textAnchor="end"
+            height={60}
+          />
           <YAxis tick={{ fill: '#696968', fontSize: 12 }} tickFormatter={(value) => formatDuration(Number(value))} />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip formatCategoryLabel={formatCategoryLabel} />} />
           <Bar dataKey="minutes" fill="#274346" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>

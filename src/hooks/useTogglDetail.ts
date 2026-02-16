@@ -5,9 +5,14 @@ import { sql } from '../lib/neon';
 import { TogglDetailRow } from '../types';
 import { FilterState, computeDateRange, shouldLogFilters } from './useFilters';
 
-export function useTogglDetail(filters: FilterState) {
+interface UseTogglDetailOptions {
+  enabled?: boolean;
+}
+
+export function useTogglDetail(filters: FilterState, options?: UseTogglDetailOptions) {
   return useQuery<TogglDetailRow[]>({
     queryKey: ['v_toggl_detail', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       const assistantId = filters.assistant[0] ?? null;
       const familyId = filters.client[0] ?? null;

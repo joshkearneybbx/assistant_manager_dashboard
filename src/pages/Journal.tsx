@@ -101,6 +101,25 @@ function groupCategories(rows: JournalCategoryRow[]): Array<[string, JournalCate
   return Array.from(byGroup.entries());
 }
 
+function groupRowsByAssistantType<T>(
+  rows: T[],
+  getType: (row: T) => string
+): Array<['FOH' | 'BOH', T[]]> {
+  const foh: T[] = [];
+  const boh: T[] = [];
+  for (const row of rows) {
+    if (getType(row) === 'BOH') {
+      boh.push(row);
+      continue;
+    }
+    foh.push(row);
+  }
+  return [
+    ['FOH', foh],
+    ['BOH', boh]
+  ];
+}
+
 function toJournalDate(value: string): Date | null {
   const normalized = value.trim();
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
@@ -224,6 +243,10 @@ export function Journal() {
   const assistantOptions = assistants.data ?? [];
   const activeCategoryOptions = activeCategories.data ?? [];
   const allCategoryRows = allCategories.data ?? [];
+  const groupedAssistantOptions = useMemo(
+    () => groupRowsByAssistantType(assistantOptions, (assistant) => assistant.type),
+    [assistantOptions]
+  );
 
   const groupedActiveCategories = useMemo(
     () => groupCategories(activeCategoryOptions),
@@ -235,7 +258,11 @@ export function Journal() {
     [allCategoryRows]
   );
 
-  const summaryRows = (summary.data ?? []).filter((row) => row.assistant_type === 'FOH');
+  const summaryRows = summary.data ?? [];
+  const groupedSummaryRows = useMemo(
+    () => groupRowsByAssistantType(summaryRows, (row) => row.assistant_type),
+    [summaryRows]
+  );
   const selectedAssistant =
     selectedAssistantId == null
       ? null
@@ -504,43 +531,62 @@ export function Journal() {
                 onRetry={() => summary.refetch()}
               />
             ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {summaryRows.map((row) => {
-                  const buckets = [
-                    { label: 'Attendance', value: row.attendance_30d },
-                    { label: 'Performance', value: row.performance_30d },
-                    { label: 'Development', value: row.development_30d },
-                    { label: 'Operational', value: row.operational_30d }
-                  ].filter((item) => item.value > 0);
+              <div className="space-y-5">
+                {groupedSummaryRows.map(([typeLabel, rows]) => (
+                  <div key={typeLabel} className="space-y-2">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-grey-400">
+                      {typeLabel}
+                    </h3>
+                    {rows.length === 0 ? (
+                      <div className="rounded-lg border border-sand-300 bg-sand-100 px-4 py-3 text-sm text-grey-400">
+                        No {typeLabel} assistants found.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {rows.map((row) => {
+                          const buckets = [
+                            { label: 'Attendance', value: row.attendance_30d },
+                            { label: 'Performance', value: row.performance_30d },
+                            { label: 'Development', value: row.development_30d },
+                            { label: 'Operational', value: row.operational_30d }
+                          ].filter((item) => item.value > 0);
 
-                  return (
-                    <button
-                      type="button"
-                      key={row.assistant_id}
-                      onClick={() => openAssistantModal(row.assistant_id)}
-                      className="rounded-lg border border-sand-300 bg-white p-4 text-left shadow-sm transition hover:bg-sand-100"
-                    >
-                      <div className="text-base font-semibold text-base-black">{row.assistant_name}</div>
-                      <div className="mt-1 text-sm text-grey-400">
-                        {row.entries_last_30d} entries in last 30 days
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {buckets.length ? (
-                          buckets.map((bucket) => (
-                            <span
-                              key={bucket.label}
-                              className="inline-flex rounded-full border border-sand-300 bg-sand-100 px-2 py-0.5 text-xs font-medium text-base-black"
+                          return (
+                            <button
+                              type="button"
+                              key={row.assistant_id}
+                              onClick={() => openAssistantModal(row.assistant_id)}
+                              className="rounded-lg border border-sand-300 bg-white p-4 text-left shadow-sm transition hover:bg-sand-100"
                             >
-                              {bucket.label} ({bucket.value})
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-grey-400">No grouped entries in last 30 days.</span>
-                        )}
+                              <div className="text-base font-semibold text-base-black">
+                                {row.assistant_name}
+                              </div>
+                              <div className="mt-1 text-sm text-grey-400">
+                                {row.entries_last_30d} entries in last 30 days
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {buckets.length ? (
+                                  buckets.map((bucket) => (
+                                    <span
+                                      key={bucket.label}
+                                      className="inline-flex rounded-full border border-sand-300 bg-sand-100 px-2 py-0.5 text-xs font-medium text-base-black"
+                                    >
+                                      {bucket.label} ({bucket.value})
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-grey-400">
+                                    No grouped entries in last 30 days.
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
-                    </button>
-                  );
-                })}
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </section>
@@ -569,10 +615,14 @@ export function Journal() {
                   }
                 >
                   <option value="">Select Assistant</option>
-                  {assistantOptions.map((assistant) => (
-                    <option key={assistant.id} value={assistant.id}>
-                      {assistant.name}
-                    </option>
+                  {groupedAssistantOptions.map(([typeLabel, rows]) => (
+                    <optgroup key={typeLabel} label={typeLabel}>
+                      {rows.map((assistant) => (
+                        <option key={assistant.id} value={assistant.id}>
+                          {assistant.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
 
@@ -657,10 +707,14 @@ export function Journal() {
                   aria-label="Filter by assistant"
                 >
                   <option value="">All Assistants</option>
-                  {assistantOptions.map((assistant) => (
-                    <option key={assistant.id} value={assistant.id}>
-                      {assistant.name}
-                    </option>
+                  {groupedAssistantOptions.map(([typeLabel, rows]) => (
+                    <optgroup key={typeLabel} label={typeLabel}>
+                      {rows.map((assistant) => (
+                        <option key={assistant.id} value={assistant.id}>
+                          {assistant.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
 

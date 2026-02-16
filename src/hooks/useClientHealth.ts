@@ -5,9 +5,14 @@ import { sql } from '../lib/neon';
 import { ClientHealthRow } from '../types';
 import { FilterState, shouldLogFilters } from './useFilters';
 
-export function useClientHealth(filters: FilterState) {
+interface UseClientHealthOptions {
+  enabled?: boolean;
+}
+
+export function useClientHealth(filters: FilterState, options?: UseClientHealthOptions) {
   return useQuery<ClientHealthRow[]>({
     queryKey: ['v_client_health', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       const assistantId = filters.assistant[0] ?? null;
       const familyId = filters.client[0] ?? null;

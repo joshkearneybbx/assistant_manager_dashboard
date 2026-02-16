@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, ChevronUp, ChevronsUpDown, Inbox } from 'lucide-react';
-import { Fragment, ReactNode, useMemo, useRef, useState, useEffect, KeyboardEvent } from 'react';
+import { Fragment, ReactNode, useMemo, useState, KeyboardEvent } from 'react';
 
 interface Column<T> {
   key: string;
@@ -21,25 +21,8 @@ interface DataTableProps<T> {
 }
 
 function ExpandPanel({ expanded, children }: { expanded: boolean; children: ReactNode }) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    if (expanded && contentRef.current) {
-      setHeight(contentRef.current.scrollHeight);
-    } else {
-      setHeight(0);
-    }
-  }, [expanded]);
-
-  return (
-    <div
-      className="overflow-hidden transition-[height] duration-200 ease-in-out"
-      style={{ height: expanded ? height : 0 }}
-    >
-      <div ref={contentRef}>{children}</div>
-    </div>
-  );
+  if (!expanded) return null;
+  return <div>{children}</div>;
 }
 
 export function DataTable<T>({
@@ -102,7 +85,7 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-sand-300 bg-white shadow-sm">
+    <div className="overflow-x-auto overflow-y-visible rounded-lg border border-sand-300 bg-white shadow-sm">
       <table className="min-w-full border-collapse text-sm">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead className="bg-sand-100 text-left text-grey-400">

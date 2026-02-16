@@ -8,7 +8,12 @@ export function useAssistants() {
   return useQuery<AssistantRow[]>({
     queryKey: ['assistants'],
     queryFn: async () => {
-      const rows = (await sql`SELECT * FROM assistants WHERE type = 'FOH' ORDER BY name ASC`) as Record<string, unknown>[];
+      const rows = (await sql`
+        SELECT *
+        FROM assistants
+        WHERE type IN ('FOH', 'BOH')
+        ORDER BY type ASC, name ASC
+      `) as Record<string, unknown>[];
       return rows.map((row) => ({
         id: toStringValue(row.id),
         name: toDisplayAssistantName(toStringValue(row.name)),

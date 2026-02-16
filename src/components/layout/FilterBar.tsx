@@ -12,6 +12,7 @@ interface FilterBarProps {
 }
 
 const periodOptions: Array<{ label: string; value: TimePeriod }> = [
+  { label: 'All Time', value: 'all_time' },
   { label: 'Last 7 Days', value: 'last_7_days' },
   { label: 'This Week', value: 'this_week' },
   { label: 'Last Week', value: 'last_week' },

@@ -136,7 +136,7 @@ export async function fetchJournalSummary(): Promise<AssistantJournalSummaryRow[
   const rows = (await sql`
     SELECT *
     FROM v_assistant_journal_summary
-    WHERE assistant_type = 'FOH'
+    WHERE assistant_type IN ('FOH', 'BOH')
     ORDER BY assistant_name ASC
   `) as Record<string, unknown>[];
   return rows.map(mapJournalSummaryRow);

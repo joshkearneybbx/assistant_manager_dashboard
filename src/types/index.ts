@@ -102,6 +102,11 @@ export interface ClientTimeTotalRow {
   total_minutes: number;
 }
 
+export interface FlexUsageRow {
+  family_id: string;
+  flex_tasks_used: number;
+}
+
 export interface AssistantRow {
   id: string;
   name: string;

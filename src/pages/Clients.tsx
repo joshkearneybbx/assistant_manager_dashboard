@@ -10,6 +10,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { useClientHealth } from '../hooks/useClientHealth';
 import { useClientTimeBreakdown } from '../hooks/useClientTimeBreakdown';
 import { useClientTimeTotals } from '../hooks/useClientTimeTotals';
+import { useFlexUsage } from '../hooks/useFlexUsage';
 import { useRecentClientTasks } from '../hooks/useRecentClientTasks';
 import { useTasksDetail } from '../hooks/useTasksDetail';
 import { UseFiltersResult } from '../hooks/useFilters';
@@ -30,6 +31,12 @@ function parseCategoryBadge(value: string | null): { emoji: string; label: strin
     emoji,
     label: toSubcategoryLabel(value)
   };
+}
+
+function flexUsageClass(used: number): string {
+  if (used >= 18) return 'border-status-red bg-status-red-light text-status-red';
+  if (used >= 15) return 'border-status-orange bg-status-orange-light text-status-orange-text';
+  return 'border-status-green bg-status-green-light text-status-green';
 }
 
 const recentTaskDateFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -54,6 +61,7 @@ export function Clients() {
   const timeTotals = useClientTimeTotals(filtersApi.filters);
   const breakdown = useClientTimeBreakdown(filtersApi.filters, expandedFamilyId ?? undefined);
   const recentTasks = useRecentClientTasks(expandedFamilyId ?? undefined);
+  const flexUsage = useFlexUsage();
 
   const isLoading = clients.isLoading || tasks.isLoading || timeTotals.isLoading;
   const hasError = clients.error || tasks.error || timeTotals.error;
@@ -68,6 +76,11 @@ export function Clients() {
 
   const minsByClient = (timeTotals.data ?? []).reduce<Record<string, number>>((acc, entry) => {
     acc[entry.family_id] = (acc[entry.family_id] ?? 0) + entry.total_minutes;
+    return acc;
+  }, {});
+
+  const flexUsageByClient = (flexUsage.data ?? []).reduce<Record<string, number>>((acc, row) => {
+    acc[row.family_id] = row.flex_tasks_used;
     return acc;
   }, {});
 
@@ -94,6 +107,7 @@ export function Clients() {
             clients.refetch();
             tasks.refetch();
             timeTotals.refetch();
+            flexUsage.refetch();
           }}
         />
       )}
@@ -257,7 +271,28 @@ export function Clients() {
                   value: (row) => row.family_name
                 },
                 { key: 'assistant', header: 'Assistant', render: (row) => row.assistant_name, sortable: true, value: (row) => row.assistant_name },
-                { key: 'plan', header: 'Plan', render: (row) => row.subscription_type ?? row.contract ?? '-' },
+                {
+                  key: 'plan',
+                  header: 'Plan',
+                  render: (row) => {
+                    const planName = row.subscription_type ?? row.contract ?? '-';
+                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
+
+                    if (!isFlexClient) return planName;
+
+                    const usage = flexUsageByClient[row.family_id] ?? 0;
+                    const badgeClass = flexUsageClass(usage);
+
+                    return (
+                      <div className="inline-flex items-center gap-2">
+                        <span>{planName}</span>
+                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass}`}>
+                          {usage}/20
+                        </span>
+                      </div>
+                    );
+                  }
+                },
                 { key: 'active', header: 'Active Tasks', render: (row) => row.active_tasks, sortable: true, value: (row) => row.active_tasks },
                 { key: 'completed', header: 'Completed (period)', render: (row) => completedByClient[row.family_id] ?? 0, sortable: true, value: (row) => completedByClient[row.family_id] ?? 0 },
                 { key: 'last', header: 'Last Task', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task },

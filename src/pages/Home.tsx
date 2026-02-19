@@ -60,22 +60,32 @@ export function Home() {
 
   const alertData = alerts.data ?? [];
   const alertMap = buildAlertMap(alertData);
-  const clientCounts = getAlertCounts(alertMap, ['client_health', 'client health', 'client']);
-  const perfCounts = getAlertCounts(alertMap, [
-    'assistant_performance',
-    'assistant performance',
-    'performance',
-    'foh_performance',
-    'foh performance'
-  ]);
-  const stuckCounts = getAlertCounts(alertMap, ['stuck_tasks', 'stuck task', 'stuck']);
   const capCounts = getAlertCounts(alertMap, ['capacity', 'foh_capacity', 'foh capacity']);
 
-  const attentionClients = (clients.data ?? []).filter((c) => c.health_status !== 'Green').slice(0, 5);
-  const flaggedAssistants = (performance.data ?? [])
+  const clientRows = clients.data ?? [];
+  const performanceRows = performance.data ?? [];
+  const stuckRows = stuckTasks.data ?? [];
+
+  const clientCounts = {
+    red: clientRows.filter((row) => row.health_status === 'Red').length,
+    amber: clientRows.filter((row) => row.health_status === 'Amber').length
+  };
+
+  const perfCounts = {
+    red: performanceRows.filter((row) => row.performance_status === 'Red').length,
+    amber: performanceRows.filter((row) => row.performance_status === 'Amber').length
+  };
+
+  const stuckCounts = {
+    red: stuckRows.filter((row) => row.stuck_status === 'Stuck').length,
+    amber: stuckRows.filter((row) => row.stuck_status === 'Aging' || row.stuck_status === 'Delayed').length
+  };
+
+  const attentionClients = clientRows.filter((c) => c.health_status !== 'Green').slice(0, 5);
+  const flaggedAssistants = performanceRows
     .filter((a) => a.performance_status !== 'Green')
     .slice(0, 5);
-  const stuckList = (stuckTasks.data ?? []).slice(0, 5);
+  const stuckList = stuckRows.slice(0, 5);
 
   return (
     <div className="space-y-6">

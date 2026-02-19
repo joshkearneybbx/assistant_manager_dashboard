@@ -23,26 +23,67 @@ export function useTogglDetail(filters: FilterState, options?: UseTogglDetailOpt
         console.info('[filters:applied][v_toggl_detail]', { assistantId, familyId, range });
       }
 
-      const rawRows = (await sql`
-        SELECT *
-        FROM v_toggl_detail
-        WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
-          AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
-          AND entry_date::date >= ${range.from}::date
-          AND entry_date::date <= ${range.to}::date
-        ORDER BY entry_date DESC
-      `) as Record<string, unknown>[];
+      try {
+        const rawRows = (await sql`
+          SELECT *
+          FROM v_toggl_detail
+          WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
+            AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
+            AND entry_date::date >= ${range.from}::date
+            AND entry_date::date <= ${range.to}::date
+            AND EXISTS (
+              SELECT 1
+              FROM tasks t
+              WHERE t.id::text = task_id::text
+                AND (
+                  t.source_detailed IS NULL
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                )
+            )
+          ORDER BY entry_date DESC
+        `) as Record<string, unknown>[];
 
-      return rawRows.map((row) => ({
-        entry_id: toStringValue(row.entry_id),
-        family_id: toStringValue(row.family_id),
-        family_name: toStringValue(row.family_name),
-        assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
-        category: row.category == null ? null : toStringValue(row.category),
-        minutes: toNumber(row.duration_minutes ?? row.minutes),
-        entry_date: toStringValue(row.entry_date)
-      }));
+        return rawRows.map((row) => ({
+          entry_id: toStringValue(row.entry_id),
+          family_id: toStringValue(row.family_id),
+          family_name: toStringValue(row.family_name),
+          assistant_id: toStringValue(row.assistant_id),
+          assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
+          category: row.category == null ? null : toStringValue(row.category),
+          minutes: toNumber(row.duration_minutes ?? row.minutes),
+          entry_date: toStringValue(row.entry_date)
+        }));
+      } catch {
+        const rawRows = (await sql`
+          SELECT *
+          FROM v_toggl_detail
+          WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
+            AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
+            AND entry_date::date >= ${range.from}::date
+            AND entry_date::date <= ${range.to}::date
+            AND EXISTS (
+              SELECT 1
+              FROM tasks t
+              WHERE t.id::text = task_id::text
+                AND (
+                  t.source_detailed IS NULL
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                )
+            )
+          ORDER BY entry_date DESC
+        `) as Record<string, unknown>[];
+
+        return rawRows.map((row) => ({
+          entry_id: toStringValue(row.entry_id),
+          family_id: toStringValue(row.family_id),
+          family_name: toStringValue(row.family_name),
+          assistant_id: toStringValue(row.assistant_id),
+          assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
+          category: row.category == null ? null : toStringValue(row.category),
+          minutes: toNumber(row.duration_minutes ?? row.minutes),
+          entry_date: toStringValue(row.entry_date)
+        }));
+      }
     }
   });
 }

@@ -43,6 +43,10 @@ export function useFOHPerformance(input: FOHPerformanceDateRange | FilterState) 
             FROM tasks t
             WHERE t.closed_at >= ${startDate} AND t.closed_at <= ${endDate}
             AND t.family_id NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9')
+            AND (
+              t.source_detailed IS NULL
+              OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+            )
             GROUP BY t.assistant_id
         ),
         toggl_stats AS (
@@ -53,6 +57,10 @@ export function useFOHPerformance(input: FOHPerformanceDateRange | FilterState) 
             JOIN toggl_entries te ON te.task_id = t.id
             WHERE t.closed_at >= ${startDate} AND t.closed_at <= ${endDate}
             AND t.family_id NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9')
+            AND (
+              t.source_detailed IS NULL
+              OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+            )
             GROUP BY t.assistant_id
         ),
         clients AS (

@@ -9,6 +9,29 @@ interface UseClientHealthOptions {
   enabled?: boolean;
 }
 
+const QUIET_RED_DAYS = 14;
+const QUIET_AMBER_DAYS = 7;
+
+function toIsoStringOrNull(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) return value.toISOString();
+  return toStringValue(value);
+}
+
+function daysSince(value: string | null): number {
+  if (!value) return 9999;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 9999;
+  const diffMs = Date.now() - parsed.getTime();
+  return Math.max(0, Math.floor(diffMs / 86400000));
+}
+
+function toHealthStatus(days: number): ClientHealthRow['health_status'] {
+  if (days >= QUIET_RED_DAYS) return 'Red';
+  if (days >= QUIET_AMBER_DAYS) return 'Amber';
+  return 'Green';
+}
+
 export function useClientHealth(filters: FilterState, options?: UseClientHealthOptions) {
   return useQuery<ClientHealthRow[]>({
     queryKey: ['v_client_health', filters],
@@ -24,46 +47,90 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
         console.info('[filters:applied][v_client_health]', { assistantId, familyId, planType, status });
       }
 
-      let rawRows: Record<string, unknown>[];
+      let baseRows: Record<string, unknown>[];
       try {
-        rawRows = (await sql`
+        baseRows = (await sql`
           SELECT *
           FROM v_client_health
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
             AND (${planType}::text IS NULL OR COALESCE(subscription_type, contract)::text = ${planType}::text)
-            AND (${status}::text IS NULL OR health_status::text = ${status}::text)
-          ORDER BY days_since_last_task DESC
         `) as Record<string, unknown>[];
       } catch {
-        rawRows = (await sql`
+        baseRows = (await sql`
           SELECT *
           FROM v_client_health
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
             AND (${planType}::text IS NULL OR contract::text = ${planType}::text)
-            AND (${status}::text IS NULL OR health_status::text = ${status}::text)
-          ORDER BY days_since_last_task DESC
         `) as Record<string, unknown>[];
       }
 
-      return rawRows.map((row) => ({
-        family_id: toStringValue(row.family_id),
-        family_name: toStringValue(row.family_name),
-        assistant_id: toStringValue(row.assistant_id),
-        assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
-        contract: row.contract == null ? null : toStringValue(row.contract),
-        subscription_type:
-          row.subscription_type == null
-            ? (row.contract == null ? null : toStringValue(row.contract))
-            : toStringValue(row.subscription_type),
-        life_transitions: row.life_transitions == null ? null : toStringValue(row.life_transitions),
-        life_transition_icons:
-          row.life_transition_icons == null ? null : toStringValue(row.life_transition_icons),
-        active_tasks: toNumber(row.active_tasks),
-        days_since_last_task: toNumber(row.days_since_last_task),
-        health_status: toStringValue(row.health_status, 'Green') as ClientHealthRow['health_status']
-      }));
+      const taskMetricRows = (await sql`
+        SELECT
+          t.family_id::text AS family_id,
+          COUNT(*) FILTER (
+            WHERE t.closed_at IS NULL
+              AND t.task_state IN ('Active', 'Delayed', 'New', 'Not Started')
+              AND (
+                t.task_status IS NULL
+                OR t.task_status NOT IN ('4. Done', '7. Cancelled', '8. Redundant')
+              )
+          ) AS active_tasks,
+          MAX(COALESCE(t.closed_at, t.created_at)) AS last_task_at
+        FROM tasks t
+        WHERE (
+          t.source_detailed IS NULL
+          OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+        )
+        GROUP BY t.family_id::text
+      `) as Record<string, unknown>[];
+
+      const metricsByFamily = new Map<
+        string,
+        {
+          active_tasks: number;
+          last_task_at: string | null;
+        }
+      >();
+
+      for (const row of taskMetricRows) {
+        const key = toStringValue(row.family_id);
+        metricsByFamily.set(key, {
+          active_tasks: toNumber(row.active_tasks),
+          last_task_at: toIsoStringOrNull(row.last_task_at)
+        });
+      }
+
+      const mergedRows = baseRows
+        .map((row) => {
+          const currentFamilyId = toStringValue(row.family_id);
+          const metrics = metricsByFamily.get(currentFamilyId);
+          const days_since_last_task = daysSince(metrics?.last_task_at ?? null);
+          const health_status = toHealthStatus(days_since_last_task);
+
+          return {
+            family_id: currentFamilyId,
+            family_name: toStringValue(row.family_name),
+            assistant_id: toStringValue(row.assistant_id),
+            assistant_name: toDisplayAssistantName(toStringValue(row.assistant_name)),
+            contract: row.contract == null ? null : toStringValue(row.contract),
+            subscription_type:
+              row.subscription_type == null
+                ? (row.contract == null ? null : toStringValue(row.contract))
+                : toStringValue(row.subscription_type),
+            life_transitions: row.life_transitions == null ? null : toStringValue(row.life_transitions),
+            life_transition_icons:
+              row.life_transition_icons == null ? null : toStringValue(row.life_transition_icons),
+            active_tasks: metrics?.active_tasks ?? 0,
+            days_since_last_task,
+            health_status
+          } as ClientHealthRow;
+        })
+        .filter((row) => (status ? row.health_status === status : true))
+        .sort((a, b) => b.days_since_last_task - a.days_since_last_task);
+
+      return mergedRows;
     }
   });
 }

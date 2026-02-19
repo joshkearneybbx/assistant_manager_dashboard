@@ -61,6 +61,15 @@ export function useStuckTasks(filters: FilterState, taskStatus: string = 'all') 
             ${selectedStatus}::text IS NULL
             OR REGEXP_REPLACE(st.task_status, '^\\d+(\\.\\d+)?\\.\\s*', '') = ${selectedStatus}::text
           )
+          AND EXISTS (
+            SELECT 1
+            FROM tasks t
+            WHERE t.id::text = st.task_id::text
+              AND (
+                t.source_detailed IS NULL
+                OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+              )
+          )
         ORDER BY st.days_since_update DESC
       `) as Record<string, unknown>[];
 

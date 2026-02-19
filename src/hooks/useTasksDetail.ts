@@ -19,13 +19,32 @@ export function useTasksDetail(filters: FilterState) {
       }
 
       const rawRows = (await sql`
-        SELECT *
-        FROM v_tasks_detail
-        WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
-          AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
-          AND closed_date::date >= ${range.from}::date
-          AND closed_date::date <= ${range.to}::date
-        ORDER BY closed_date DESC
+        SELECT
+          t.id::text AS task_id,
+          t.family_id::text AS family_id,
+          COALESCE(ch.family_name, '') AS family_name,
+          t.assistant_id::text AS assistant_id,
+          COALESCE(a.name, '') AS assistant_name,
+          t.title AS task_title,
+          t.category,
+          t.closed_at::date AS closed_date,
+          t.created_at
+        FROM tasks t
+        LEFT JOIN (
+          SELECT DISTINCT family_id::text AS family_id, family_name
+          FROM v_client_health
+        ) ch ON ch.family_id = t.family_id::text
+        LEFT JOIN assistants a ON a.id::text = t.assistant_id::text
+        WHERE (${assistantId}::text IS NULL OR t.assistant_id::text = ${assistantId}::text)
+          AND (${familyId}::text IS NULL OR t.family_id::text = ${familyId}::text)
+          AND t.closed_at IS NOT NULL
+          AND t.closed_at::date >= ${range.from}::date
+          AND t.closed_at::date <= ${range.to}::date
+          AND (
+            t.source_detailed IS NULL
+            OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+          )
+        ORDER BY t.closed_at DESC
       `) as Record<string, unknown>[];
 
       return rawRows.map((row) => ({

@@ -12,6 +12,10 @@ export function useRecentClientTasks(familyId?: string) {
         SELECT title, category, task_state, created_at, closed_at
         FROM tasks
         WHERE family_id = ${familyId}
+          AND (
+            source_detailed IS NULL
+            OR source_detailed NOT IN ('Engagement', 'Marketing')
+          )
         ORDER BY created_at DESC
         LIMIT 5
       `) as Record<string, unknown>[];

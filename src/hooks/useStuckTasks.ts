@@ -67,7 +67,7 @@ export function useStuckTasks(filters: FilterState, taskStatus: string = 'all') 
             WHERE t.id::text = st.task_id::text
               AND (
                 t.source_detailed IS NULL
-                OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
               )
           )
         ORDER BY st.days_since_update DESC

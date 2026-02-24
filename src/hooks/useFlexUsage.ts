@@ -15,7 +15,7 @@ export function useFlexUsage() {
                 AND t.created_at >= f.flex_start_date
                 AND (
                   t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
                 )
             ) as flex_tasks_used
         FROM families f

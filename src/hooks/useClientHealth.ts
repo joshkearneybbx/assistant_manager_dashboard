@@ -9,9 +9,6 @@ interface UseClientHealthOptions {
   enabled?: boolean;
 }
 
-const QUIET_RED_DAYS = 14;
-const QUIET_AMBER_DAYS = 7;
-
 function toIsoStringOrNull(value: unknown): string | null {
   if (value == null) return null;
   if (value instanceof Date) return value.toISOString();
@@ -26,9 +23,14 @@ function daysSince(value: string | null): number {
   return Math.max(0, Math.floor(diffMs / 86400000));
 }
 
-function toHealthStatus(days: number): ClientHealthRow['health_status'] {
-  if (days >= QUIET_RED_DAYS) return 'Red';
-  if (days >= QUIET_AMBER_DAYS) return 'Amber';
+function normalizeHealthStatus(value: unknown): ClientHealthRow['health_status'] {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase();
+
+  if (normalized === 'red') return 'Red';
+  if (normalized === 'amber') return 'Amber';
+  if (normalized === 'purple') return 'Purple';
   return 'Green';
 }
 
@@ -81,7 +83,7 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
         FROM tasks t
         WHERE (
           t.source_detailed IS NULL
-          OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+          OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
         )
         GROUP BY t.family_id::text
       `) as Record<string, unknown>[];
@@ -106,8 +108,19 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
         .map((row) => {
           const currentFamilyId = toStringValue(row.family_id);
           const metrics = metricsByFamily.get(currentFamilyId);
-          const days_since_last_task = daysSince(metrics?.last_task_at ?? null);
-          const health_status = toHealthStatus(days_since_last_task);
+
+          const viewLastTaskAt =
+            toIsoStringOrNull(row.last_task_at) ??
+            toIsoStringOrNull(row.last_activity_at) ??
+            metrics?.last_task_at ??
+            null;
+
+          const days_since_last_task =
+            row.days_since_last_task == null
+              ? daysSince(viewLastTaskAt)
+              : toNumber(row.days_since_last_task);
+
+          const viewActiveTasks = row.active_tasks == null ? metrics?.active_tasks ?? 0 : toNumber(row.active_tasks);
 
           return {
             family_id: currentFamilyId,
@@ -122,9 +135,10 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
             life_transitions: row.life_transitions == null ? null : toStringValue(row.life_transitions),
             life_transition_icons:
               row.life_transition_icons == null ? null : toStringValue(row.life_transition_icons),
-            active_tasks: metrics?.active_tasks ?? 0,
+            active_tasks: viewActiveTasks,
             days_since_last_task,
-            health_status
+            health_status: normalizeHealthStatus(row.health_status),
+            flex_tasks_used: row.flex_tasks_used == null ? 0 : toNumber(row.flex_tasks_used)
           } as ClientHealthRow;
         })
         .filter((row) => (status ? row.health_status === status : true))

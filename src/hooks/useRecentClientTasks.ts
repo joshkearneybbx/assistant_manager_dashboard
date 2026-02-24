@@ -14,7 +14,7 @@ export function useRecentClientTasks(familyId?: string) {
         WHERE family_id = ${familyId}
           AND (
             source_detailed IS NULL
-            OR source_detailed NOT IN ('Engagement', 'Marketing')
+            OR source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
           )
         ORDER BY created_at DESC
         LIMIT 5

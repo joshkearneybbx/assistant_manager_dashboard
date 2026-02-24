@@ -1,4 +1,4 @@
-export type HealthStatus = 'Red' | 'Amber' | 'Green';
+export type HealthStatus = 'Red' | 'Amber' | 'Green' | 'Purple';
 export type PerformanceStatus = 'Red' | 'Amber' | 'Green';
 export type StuckStatus = 'Stuck' | 'Aging' | 'Delayed';
 
@@ -20,6 +20,7 @@ export interface ClientHealthRow {
   active_tasks: number;
   days_since_last_task: number;
   health_status: HealthStatus;
+  flex_tasks_used?: number;
 }
 
 export interface FohPerformanceRow {

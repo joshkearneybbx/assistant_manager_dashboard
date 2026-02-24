@@ -32,7 +32,7 @@ export function useClientTimeBreakdown(filters: FilterState, familyId?: string) 
               WHERE t.id::text = task_id::text
                 AND (
                   t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
                 )
             )
           GROUP BY family_id, category
@@ -60,7 +60,7 @@ export function useClientTimeBreakdown(filters: FilterState, familyId?: string) 
               WHERE t.id::text = task_id::text
                 AND (
                   t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
                 )
             )
           GROUP BY family_id, category

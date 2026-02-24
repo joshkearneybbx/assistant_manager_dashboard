@@ -45,7 +45,7 @@ export function useFOHPerformance(input: FOHPerformanceDateRange | FilterState) 
             AND t.family_id NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9')
             AND (
               t.source_detailed IS NULL
-              OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+              OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
             )
             GROUP BY t.assistant_id
         ),
@@ -59,7 +59,7 @@ export function useFOHPerformance(input: FOHPerformanceDateRange | FilterState) 
             AND t.family_id NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9')
             AND (
               t.source_detailed IS NULL
-              OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+              OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
             )
             GROUP BY t.assistant_id
         ),

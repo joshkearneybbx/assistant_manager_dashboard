@@ -10,7 +10,6 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { useClientHealth } from '../hooks/useClientHealth';
 import { useClientTimeBreakdown } from '../hooks/useClientTimeBreakdown';
 import { useClientTimeTotals } from '../hooks/useClientTimeTotals';
-import { useFlexUsage } from '../hooks/useFlexUsage';
 import { useRecentClientTasks } from '../hooks/useRecentClientTasks';
 import { useTasksDetail } from '../hooks/useTasksDetail';
 import { UseFiltersResult } from '../hooks/useFilters';
@@ -61,7 +60,6 @@ export function Clients() {
   const timeTotals = useClientTimeTotals(filtersApi.filters);
   const breakdown = useClientTimeBreakdown(filtersApi.filters, expandedFamilyId ?? undefined);
   const recentTasks = useRecentClientTasks(expandedFamilyId ?? undefined);
-  const flexUsage = useFlexUsage();
 
   const isLoading = clients.isLoading || tasks.isLoading || timeTotals.isLoading;
   const hasError = clients.error || tasks.error || timeTotals.error;
@@ -79,13 +77,9 @@ export function Clients() {
     return acc;
   }, {});
 
-  const flexUsageByClient = (flexUsage.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.family_id] = row.flex_tasks_used;
-    return acc;
-  }, {});
-
   const redCount = rows.filter((row) => row.health_status === 'Red').length;
   const amberCount = rows.filter((row) => row.health_status === 'Amber').length;
+  const renewCount = rows.filter((row) => row.health_status === 'Purple').length;
 
   return (
     <div className="space-y-6">
@@ -107,22 +101,22 @@ export function Clients() {
             clients.refetch();
             tasks.refetch();
             timeTotals.refetch();
-            flexUsage.refetch();
           }}
         />
       )}
 
       {isLoading ? (
         <>
-          <SkeletonStatCards count={3} />
+          <SkeletonStatCards count={4} />
           <SkeletonTable rows={8} cols={8} />
         </>
       ) : !hasError && (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <StatCard label="Total Clients" value={rows.length} />
             <StatCard label="Red Clients" value={redCount} />
             <StatCard label="Amber Clients" value={amberCount} />
+            <StatCard label="Renew Clients" value={renewCount} />
           </div>
 
           <section>
@@ -280,7 +274,7 @@ export function Clients() {
 
                     if (!isFlexClient) return planName;
 
-                    const usage = flexUsageByClient[row.family_id] ?? 0;
+                    const usage = row.flex_tasks_used ?? 0;
                     const badgeClass = flexUsageClass(usage);
 
                     return (
@@ -293,8 +287,32 @@ export function Clients() {
                     );
                   }
                 },
-                { key: 'active', header: 'Active Tasks', render: (row) => row.active_tasks, sortable: true, value: (row) => row.active_tasks },
-                { key: 'completed', header: 'Completed (period)', render: (row) => completedByClient[row.family_id] ?? 0, sortable: true, value: (row) => completedByClient[row.family_id] ?? 0 },
+                {
+                  key: 'active',
+                  header: 'Active Tasks',
+                  render: (row) => {
+                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
+                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 20` : row.active_tasks;
+                  },
+                  sortable: true,
+                  value: (row) => {
+                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
+                    return isFlexClient ? row.flex_tasks_used ?? 0 : row.active_tasks;
+                  }
+                },
+                {
+                  key: 'completed',
+                  header: 'Completed (period)',
+                  render: (row) => {
+                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
+                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 20` : completedByClient[row.family_id] ?? 0;
+                  },
+                  sortable: true,
+                  value: (row) => {
+                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
+                    return isFlexClient ? row.flex_tasks_used ?? 0 : completedByClient[row.family_id] ?? 0;
+                  }
+                },
                 { key: 'last', header: 'Last Task', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task },
                 { key: 'time', header: 'Total Time (period)', render: (row) => formatDuration(minsByClient[row.family_id] ?? 0), sortable: true, value: (row) => minsByClient[row.family_id] ?? 0 },
                 { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.health_status} /> }

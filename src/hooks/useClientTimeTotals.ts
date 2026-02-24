@@ -49,7 +49,7 @@ export function useClientTimeTotals(filters: FilterState) {
             AND te.start_time::date <= ${range.to}::date
             AND (
               t.source_detailed IS NULL
-              OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+              OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
             )
           GROUP BY t.family_id::text, ch.family_name
         `) as Record<string, unknown>[];
@@ -72,7 +72,7 @@ export function useClientTimeTotals(filters: FilterState) {
               AND te.entry_date::date <= ${range.to}::date
               AND (
                 t.source_detailed IS NULL
-                OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
               )
             GROUP BY t.family_id::text, ch.family_name
           `) as Record<string, unknown>[];
@@ -94,7 +94,7 @@ export function useClientTimeTotals(filters: FilterState) {
               AND te.date::date <= ${range.to}::date
               AND (
                 t.source_detailed IS NULL
-                OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
               )
             GROUP BY t.family_id::text, ch.family_name
           `) as Record<string, unknown>[];

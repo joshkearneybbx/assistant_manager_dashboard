@@ -37,7 +37,7 @@ export function useTogglDetail(filters: FilterState, options?: UseTogglDetailOpt
               WHERE t.id::text = task_id::text
                 AND (
                   t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
                 )
             )
           ORDER BY entry_date DESC
@@ -67,7 +67,7 @@ export function useTogglDetail(filters: FilterState, options?: UseTogglDetailOpt
               WHERE t.id::text = task_id::text
                 AND (
                   t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+                  OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
                 )
             )
           ORDER BY entry_date DESC

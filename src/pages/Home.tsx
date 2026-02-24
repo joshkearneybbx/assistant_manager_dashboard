@@ -68,7 +68,7 @@ export function Home() {
 
   const clientCounts = {
     red: clientRows.filter((row) => row.health_status === 'Red').length,
-    amber: clientRows.filter((row) => row.health_status === 'Amber').length
+    amber: clientRows.filter((row) => row.health_status === 'Amber' || row.health_status === 'Purple').length
   };
 
   const perfCounts = {
@@ -119,7 +119,7 @@ export function Home() {
       ) : !hasError && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <AlertCard title="Client Health" redCount={clientCounts.red} amberCount={clientCounts.amber} onClick={() => navigate('/clients?status=Red,Amber')} />
+            <AlertCard title="Client Health" redCount={clientCounts.red} amberCount={clientCounts.amber} onClick={() => navigate('/clients?status=Red,Amber,Purple')} />
             <AlertCard title="Assistant Performance" redCount={perfCounts.red} amberCount={perfCounts.amber} onClick={() => navigate('/performance?status=Red,Amber')} />
             <AlertCard title="Stuck Tasks" redCount={stuckCounts.red} amberCount={stuckCounts.amber} onClick={() => navigate('/stuck-tasks')} />
             <AlertCard title="Capacity" redCount={capCounts.red} amberCount={capCounts.amber} onClick={() => navigate('/capacity')} />
@@ -128,7 +128,7 @@ export function Home() {
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-lg font-bold text-base-black">Clients Needing Attention</h2>
-              <Link className="text-sm text-assistant-dark hover:underline" to="/clients?status=Red,Amber">
+              <Link className="text-sm text-assistant-dark hover:underline" to="/clients?status=Red,Amber,Purple">
                 View All
               </Link>
             </div>

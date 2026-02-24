@@ -60,6 +60,36 @@ function compileSqlForLog(strings: TemplateStringsArray, values: unknown[]): str
   return query.replace(/\s+/g, ' ').trim();
 }
 
+function toErrorLog(error: unknown) {
+  if (!error || typeof error !== 'object') {
+    return { message: String(error) };
+  }
+
+  const err = error as {
+    name?: string;
+    message?: string;
+    code?: string;
+    hint?: string;
+    detail?: string;
+    where?: string;
+    position?: string;
+    severity?: string;
+    sourceError?: { message?: string; code?: string };
+  };
+
+  return {
+    name: err.name,
+    message: err.message,
+    code: err.code,
+    hint: err.hint,
+    detail: err.detail,
+    where: err.where,
+    position: err.position,
+    severity: err.severity,
+    sourceError: err.sourceError
+  };
+}
+
 async function sql<T = Record<string, unknown>>(
   strings: TemplateStringsArray,
   ...values: unknown[]
@@ -77,7 +107,11 @@ async function sql<T = Record<string, unknown>>(
     return result as T[];
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('[neon/sql:error]', compiled, { values: normalizedValues, error });
+    console.error('[neon/sql:error]', compiled, {
+      values: normalizedValues,
+      error: toErrorLog(error),
+      rawError: error
+    });
     throw error;
   }
 }

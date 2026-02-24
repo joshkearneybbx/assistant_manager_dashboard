@@ -172,9 +172,14 @@ export function FilterBar({
             aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
-            {['Red', 'Amber', 'Green'].map((status) => (
-              <option key={status} value={status}>
-                {status}
+            {[
+              { label: 'Red', value: 'Red' },
+              { label: 'Amber', value: 'Amber' },
+              { label: 'Renew', value: 'Purple' },
+              { label: 'Green', value: 'Green' }
+            ].map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
               </option>
             ))}
           </select>

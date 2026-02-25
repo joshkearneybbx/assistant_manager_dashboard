@@ -313,7 +313,7 @@ export function Clients() {
                     return isFlexClient ? row.flex_tasks_used ?? 0 : completedByClient[row.family_id] ?? 0;
                   }
                 },
-                { key: 'last', header: 'Last Task', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task },
+                { key: 'last', header: 'Last Task', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task ?? 9999 },
                 { key: 'time', header: 'Total Time (period)', render: (row) => formatDuration(minsByClient[row.family_id] ?? 0), sortable: true, value: (row) => minsByClient[row.family_id] ?? 0 },
                 { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.health_status} /> }
               ]}

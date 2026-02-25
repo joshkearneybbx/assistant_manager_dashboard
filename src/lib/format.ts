@@ -1,4 +1,7 @@
-export function daysAgo(days: number): string {
+const NO_TASKS_YET_THRESHOLD_DAYS = 365;
+
+export function daysAgo(days: number | null | undefined): string {
+  if (days == null || days > NO_TASKS_YET_THRESHOLD_DAYS) return 'No tasks yet';
   return `${days} day${days === 1 ? '' : 's'} ago`;
 }
 

@@ -10,7 +10,7 @@ import { useDashboardAlerts } from '../hooks/useDashboardAlerts';
 import { useFOHPerformance } from '../hooks/useFOHPerformance';
 import { useStuckTasks } from '../hooks/useStuckTasks';
 import { UseFiltersResult } from '../hooks/useFilters';
-import { formatDuration } from '../lib/format';
+import { daysAgo, formatDuration } from '../lib/format';
 
 type AlertLikeRow = {
   alert_type?: string | null;
@@ -141,7 +141,7 @@ export function Home() {
                 { key: 'name', header: 'Client', render: (row) => row.family_name, sortable: true, value: (row) => row.family_name },
                 { key: 'assistant', header: 'Assistant', render: (row) => row.assistant_name, sortable: true, value: (row) => row.assistant_name },
                 { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.health_status} /> },
-                { key: 'days', header: 'Days Inactive', render: (row) => `${row.days_since_last_task} days`, sortable: true, value: (row) => row.days_since_last_task }
+                { key: 'days', header: 'Days Inactive', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task ?? 9999 }
               ]}
               onRowClick={() => navigate('/clients')}
             />

@@ -18,7 +18,8 @@ export interface ClientHealthRow {
   life_transitions?: string | null;
   life_transition_icons?: string | null;
   active_tasks: number;
-  days_since_last_task: number;
+  days_since_last_task: number | null;
+  days_since_last_completion?: number | null;
   health_status: HealthStatus;
   flex_tasks_used?: number;
 }

@@ -23,6 +23,16 @@ function daysSince(value: string | null): number {
   return Math.max(0, Math.floor(diffMs / 86400000));
 }
 
+function toNullableDays(value: unknown): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sortableDays(value: number | null | undefined): number {
+  return value == null ? 9999 : value;
+}
+
 function normalizeHealthStatus(value: unknown): ClientHealthRow['health_status'] {
   const normalized = String(value ?? '')
     .trim()
@@ -137,12 +147,13 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
               row.life_transition_icons == null ? null : toStringValue(row.life_transition_icons),
             active_tasks: viewActiveTasks,
             days_since_last_task,
+            days_since_last_completion: toNullableDays(row.days_since_last_completion),
             health_status: normalizeHealthStatus(row.health_status),
             flex_tasks_used: row.flex_tasks_used == null ? 0 : toNumber(row.flex_tasks_used)
           } as ClientHealthRow;
         })
         .filter((row) => (status ? row.health_status === status : true))
-        .sort((a, b) => b.days_since_last_task - a.days_since_last_task);
+        .sort((a, b) => sortableDays(b.days_since_last_task) - sortableDays(a.days_since_last_task));
 
       return mergedRows;
     }

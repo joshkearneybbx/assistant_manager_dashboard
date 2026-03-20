@@ -93,7 +93,7 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
         FROM tasks t
         WHERE (
           t.source_detailed IS NULL
-          OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
+          OR t.source_detailed NOT IN ('Engagement', 'Marketing')
         )
         GROUP BY t.family_id::text
       `) as Record<string, unknown>[];

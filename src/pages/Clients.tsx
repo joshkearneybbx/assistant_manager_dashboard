@@ -33,8 +33,8 @@ function parseCategoryBadge(value: string | null): { emoji: string; label: strin
 }
 
 function flexUsageClass(used: number): string {
-  if (used >= 18) return 'border-status-red bg-status-red-light text-status-red';
-  if (used >= 15) return 'border-status-orange bg-status-orange-light text-status-orange-text';
+  if (used >= 13) return 'border-status-purple bg-status-purple-light text-status-purple';
+  if (used >= 9) return 'border-status-orange bg-status-orange-light text-status-orange-text';
   return 'border-status-green bg-status-green-light text-status-green';
 }
 
@@ -83,7 +83,7 @@ export function Clients() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border-l-4 border-l-assistant-dark border border-sand-300 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-sand-300 bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-bold text-base-black">Client Health</h1>
         <p className="mt-1 text-sm text-grey-400">Client activity status with expandable time and task breakdown.</p>
       </section>

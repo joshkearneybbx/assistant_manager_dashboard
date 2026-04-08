@@ -281,7 +281,7 @@ export function Clients() {
                       <div className="inline-flex items-center gap-2">
                         <span>{planName}</span>
                         <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass}`}>
-                          {usage}/20
+                          {usage}/15
                         </span>
                       </div>
                     );
@@ -292,7 +292,7 @@ export function Clients() {
                   header: 'Active Tasks',
                   render: (row) => {
                     const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 20` : row.active_tasks;
+                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 15` : row.active_tasks;
                   },
                   sortable: true,
                   value: (row) => {
@@ -305,7 +305,7 @@ export function Clients() {
                   header: 'Completed (period)',
                   render: (row) => {
                     const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 20` : completedByClient[row.family_id] ?? 0;
+                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 15` : completedByClient[row.family_id] ?? 0;
                   },
                   sortable: true,
                   value: (row) => {

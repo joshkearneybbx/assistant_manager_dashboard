@@ -22,6 +22,14 @@ export interface ClientHealthRow {
   days_since_last_completion?: number | null;
   health_status: HealthStatus;
   flex_tasks_used?: number;
+  last_activity_closed: string | null;
+  last_activity_created: string | null;
+  last_activity_closed_title: string | null;
+  last_activity_created_title: string | null;
+  recent_excluded_closure_titles: string[];
+  recent_excluded_closure_count: number;
+  recent_recurring_closure_titles: string[];
+  recent_recurring_closure_count: number;
 }
 
 export interface FohPerformanceRow {
@@ -30,6 +38,8 @@ export interface FohPerformanceRow {
   tasks_completed: number;
   active_tasks: number;
   avg_mins_per_task: number;
+  task_minutes: number;
+  admin_minutes: number;
   client_count: number;
   red_clients: number;
   amber_clients: number;
@@ -102,6 +112,8 @@ export interface ClientTimeTotalRow {
   family_id: string;
   family_name: string;
   total_minutes: number;
+  foh_minutes: number;
+  boh_minutes: number;
 }
 
 export interface FlexUsageRow {

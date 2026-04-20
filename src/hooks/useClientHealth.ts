@@ -44,6 +44,22 @@ function normalizeHealthStatus(value: unknown): ClientHealthRow['health_status']
   return 'Green';
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  }
+  return [];
+}
+
+function normalizeInt(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
 export function useClientHealth(filters: FilterState, options?: UseClientHealthOptions) {
   return useQuery<ClientHealthRow[]>({
     queryKey: ['v_client_health', filters],
@@ -66,6 +82,7 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
           FROM v_client_health
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
+            AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND (${planType}::text IS NULL OR COALESCE(subscription_type, contract)::text = ${planType}::text)
         `) as Record<string, unknown>[];
       } catch {
@@ -74,6 +91,7 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
           FROM v_client_health
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
+            AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND (${planType}::text IS NULL OR contract::text = ${planType}::text)
         `) as Record<string, unknown>[];
       }
@@ -95,6 +113,7 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
           t.source_detailed IS NULL
           OR t.source_detailed NOT IN ('Engagement', 'Marketing')
         )
+        AND t.family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
         GROUP BY t.family_id::text
       `) as Record<string, unknown>[];
 
@@ -149,7 +168,15 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
             days_since_last_task,
             days_since_last_completion: toNullableDays(row.days_since_last_completion),
             health_status: normalizeHealthStatus(row.health_status),
-            flex_tasks_used: row.flex_tasks_used == null ? 0 : toNumber(row.flex_tasks_used)
+            flex_tasks_used: row.flex_tasks_used == null ? 0 : toNumber(row.flex_tasks_used),
+            last_activity_closed: toIsoStringOrNull(row.last_activity_closed),
+            last_activity_created: toIsoStringOrNull(row.last_activity_created),
+            last_activity_closed_title: row.last_activity_closed_title == null ? null : toStringValue(row.last_activity_closed_title),
+            last_activity_created_title: row.last_activity_created_title == null ? null : toStringValue(row.last_activity_created_title),
+            recent_excluded_closure_titles: normalizeStringArray(row.recent_excluded_closure_titles),
+            recent_excluded_closure_count: normalizeInt(row.recent_excluded_closure_count),
+            recent_recurring_closure_titles: normalizeStringArray(row.recent_recurring_closure_titles),
+            recent_recurring_closure_count: normalizeInt(row.recent_recurring_closure_count)
           } as ClientHealthRow;
         })
         .filter((row) => (status ? row.health_status === status : true))

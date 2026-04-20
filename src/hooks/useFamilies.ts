@@ -10,6 +10,7 @@ export function useFamilies() {
       const rows = (await sql`
         SELECT DISTINCT family_id, family_name
         FROM v_client_health
+        WHERE family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
         ORDER BY family_name ASC
       `) as Record<string, unknown>[];
       return rows

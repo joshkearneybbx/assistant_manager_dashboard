@@ -24,6 +24,7 @@ export function useClientTimeBreakdown(filters: FilterState, familyId?: string) 
             SUM(duration_minutes) AS minutes
           FROM v_toggl_detail
           WHERE family_id::text = ${familyId}::text
+            AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND entry_date::date >= ${range.from}::date
             AND entry_date::date <= ${range.to}::date
             AND EXISTS (
@@ -52,6 +53,7 @@ export function useClientTimeBreakdown(filters: FilterState, familyId?: string) 
             SUM(minutes) AS minutes
           FROM v_toggl_detail
           WHERE family_id::text = ${familyId}::text
+            AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND entry_date::date >= ${range.from}::date
             AND entry_date::date <= ${range.to}::date
             AND EXISTS (

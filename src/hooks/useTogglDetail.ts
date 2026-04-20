@@ -29,6 +29,7 @@ export function useTogglDetail(filters: FilterState, options?: UseTogglDetailOpt
           FROM v_toggl_detail
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
+            AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND entry_date::date >= ${range.from}::date
             AND entry_date::date <= ${range.to}::date
             AND EXISTS (
@@ -59,6 +60,7 @@ export function useTogglDetail(filters: FilterState, options?: UseTogglDetailOpt
           FROM v_toggl_detail
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
+            AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND entry_date::date >= ${range.from}::date
             AND entry_date::date <= ${range.to}::date
             AND EXISTS (

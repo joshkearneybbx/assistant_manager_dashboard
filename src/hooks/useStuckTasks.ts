@@ -36,6 +36,7 @@ export function useStuckTasks(filters: FilterState, taskStatus: string = 'all') 
             SELECT ch.family_id::text
             FROM v_client_health ch
             WHERE ch.family_name = st.family_name
+            AND ch.family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             LIMIT 1
           ) AS family_id
         FROM v_stuck_tasks st
@@ -55,6 +56,7 @@ export function useStuckTasks(filters: FilterState, taskStatus: string = 'all') 
               FROM v_client_health ch
               WHERE ch.family_id::text = ${familyId}::text
                 AND ch.family_name = st.family_name
+                AND ch.family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             )
           )
           AND (

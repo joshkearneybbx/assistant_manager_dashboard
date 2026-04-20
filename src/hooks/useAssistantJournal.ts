@@ -132,6 +132,26 @@ export async function fetchJournalEntries(
   return rows.map(mapJournalEntryRow);
 }
 
+export async function fetchRecentJournalEntries(
+  assistantId: string
+): Promise<AssistantJournalEntryRow[]> {
+  const rows = (await sql`
+    SELECT
+      j.*,
+      c.name AS category_name,
+      c.emoji AS category_emoji,
+      c.colour AS category_colour,
+      c.group_name AS category_group_name
+    FROM assistant_journal j
+    JOIN journal_categories c ON c.id = j.category_id
+    WHERE j.assistant_id::text = ${assistantId}::text
+    ORDER BY j.entry_date DESC, j.id DESC
+    LIMIT 5
+  `) as Record<string, unknown>[];
+
+  return rows.map(mapJournalEntryRow);
+}
+
 export async function fetchJournalSummary(): Promise<AssistantJournalSummaryRow[]> {
   const rows = (await sql`
     SELECT *
@@ -239,6 +259,17 @@ export function useJournalEntries(
     queryKey: ['assistant_journal_entries', filters],
     queryFn: () => fetchJournalEntries(filters),
     enabled: options?.enabled ?? true
+  });
+}
+
+export function useRecentJournalEntries(
+  assistantId: string | null | undefined,
+  options?: UseJournalEntriesOptions
+) {
+  return useQuery<AssistantJournalEntryRow[]>({
+    queryKey: ['assistant_journal_entries_recent', assistantId],
+    queryFn: () => fetchRecentJournalEntries(toStringValue(assistantId)),
+    enabled: (options?.enabled ?? true) && Boolean(assistantId)
   });
 }
 

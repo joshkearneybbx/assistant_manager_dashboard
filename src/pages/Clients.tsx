@@ -72,8 +72,12 @@ export function Clients() {
     return acc;
   }, {});
 
-  const minsByClient = (timeTotals.data ?? []).reduce<Record<string, number>>((acc, entry) => {
-    acc[entry.family_id] = (acc[entry.family_id] ?? 0) + entry.total_minutes;
+  const minsByClient = (timeTotals.data ?? []).reduce<Record<string, { total_minutes: number; foh_minutes: number; boh_minutes: number }>>((acc, entry) => {
+    acc[entry.family_id] = {
+      total_minutes: (acc[entry.family_id]?.total_minutes ?? 0) + entry.total_minutes,
+      foh_minutes: (acc[entry.family_id]?.foh_minutes ?? 0) + entry.foh_minutes,
+      boh_minutes: (acc[entry.family_id]?.boh_minutes ?? 0) + entry.boh_minutes
+    };
     return acc;
   }, {});
 
@@ -314,7 +318,23 @@ export function Clients() {
                   }
                 },
                 { key: 'last', header: 'Last Task', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task ?? 9999 },
-                { key: 'time', header: 'Total Time (period)', render: (row) => formatDuration(minsByClient[row.family_id] ?? 0), sortable: true, value: (row) => minsByClient[row.family_id] ?? 0 },
+                {
+                  key: 'time',
+                  header: 'Total Time (period)',
+                  render: (row) => {
+                    const time = minsByClient[row.family_id] ?? { total_minutes: 0, foh_minutes: 0, boh_minutes: 0 };
+                    return (
+                      <div>
+                        <div>{formatDuration(time.total_minutes)}</div>
+                        <div className="text-xs text-grey-400">
+                          FOH {formatDuration(time.foh_minutes)} / BOH {formatDuration(time.boh_minutes)}
+                        </div>
+                      </div>
+                    );
+                  },
+                  sortable: true,
+                  value: (row) => minsByClient[row.family_id]?.total_minutes ?? 0
+                },
                 { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.health_status} /> }
               ]}
             />

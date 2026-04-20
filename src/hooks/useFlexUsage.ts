@@ -22,6 +22,7 @@ export function useFlexUsage() {
         LEFT JOIN tasks t ON t.family_id::text = f.id::text
         WHERE f.contract = 'BlckBx Flex'
         AND f.flex_start_date IS NOT NULL
+        AND f.id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
         GROUP BY f.id::text
       `) as Record<string, unknown>[];
 

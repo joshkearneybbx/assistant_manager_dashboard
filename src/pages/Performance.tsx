@@ -3,6 +3,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { ErrorState } from '../components/ui/ErrorState';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { useRecentJournalEntries } from '../hooks/useAssistantJournal';
 import { useFOHPerformance } from '../hooks/useFOHPerformance';
 import { formatDuration } from '../lib/format';
 
@@ -55,6 +56,23 @@ function formatRangeLabel(start: string, end: string): string {
   return `${new Date(start).toLocaleString('en-GB')} - ${new Date(end).toLocaleString('en-GB')}`;
 }
 
+function formatHours(minutes: number): string {
+  return `${(minutes / 60).toFixed(1)} hrs`;
+}
+
+const journalDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC'
+});
+
+function formatJournalDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return journalDateFormatter.format(parsed);
+}
+
 export function Performance() {
   const now = new Date();
   const thisWeekStart = startOfWeek(now);
@@ -95,15 +113,16 @@ export function Performance() {
   }, [dateFilter, customStartDate, customEndDate]);
 
   const performance = useFOHPerformance(range);
+  const recentJournalEntries = useRecentJournalEntries(expandedAssistantId, {
+    enabled: Boolean(expandedAssistantId)
+  });
   const rows = performance.data ?? [];
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-sand-300 bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-bold text-base-black">FOH Performance</h1>
-        <p className="mt-1 text-sm text-grey-400">
-          Tasks completed and average time per task for FOH assistants.
-        </p>
+        <p className="mt-1 text-sm text-grey-400">Tasks completed and average time per task for FOH assistants.</p>
       </section>
 
       <section className="rounded-lg border border-sand-300 bg-white p-4 shadow-sm">
@@ -156,7 +175,7 @@ export function Performance() {
       )}
 
       {performance.isLoading ? (
-        <SkeletonTable rows={8} cols={5} />
+        <SkeletonTable rows={8} cols={6} />
       ) : !performance.error ? (
         <section>
           <DataTable
@@ -179,6 +198,49 @@ export function Performance() {
                 <div>
                   <span className="font-semibold">Average minutes per task:</span>{' '}
                   {formatDuration(row.avg_mins_per_task)}
+                </div>
+                <div>
+                  <span className="font-semibold">Task time:</span> {formatHours(row.task_minutes)}
+                </div>
+                <div>
+                  <span className="font-semibold">Admin time:</span> {formatHours(row.admin_minutes)}
+                </div>
+                <div className="pt-2">
+                  <h3 className="mb-2 text-sm font-semibold text-base-black">Recent Journal Entries</h3>
+                  {expandedAssistantId === row.assistant_id && recentJournalEntries.isLoading ? (
+                    <div className="rounded-md border border-sand-300 bg-sand-100 px-3 py-3 text-sm text-grey-400">
+                      Loading journal entries...
+                    </div>
+                  ) : expandedAssistantId === row.assistant_id && recentJournalEntries.error ? (
+                    <div className="rounded-md border border-sand-300 bg-sand-100 px-3 py-3 text-sm text-status-red">
+                      Failed to load journal entries.
+                    </div>
+                  ) : expandedAssistantId === row.assistant_id && (recentJournalEntries.data ?? []).length ? (
+                    <div className="space-y-2">
+                      {(recentJournalEntries.data ?? []).map((entry) => (
+                        <article
+                          key={entry.id}
+                          className="rounded-md border border-sand-300 bg-white px-3 py-2"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="inline-flex items-center gap-2 text-sm font-semibold text-base-black">
+                              <span>{entry.category_emoji}</span>
+                              <span>{entry.category_name}</span>
+                            </div>
+                            <span className="text-xs text-grey-400">{formatJournalDate(entry.entry_date)}</span>
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-base-black">{entry.title}</div>
+                          {entry.notes ? (
+                            <div className="mt-1 text-sm text-grey-400">{entry.notes}</div>
+                          ) : null}
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-sand-300 bg-sand-100 px-3 py-3 text-sm text-grey-400">
+                      No journal entries found.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -203,6 +265,20 @@ export function Performance() {
                 sortable: true,
                 value: (row) => row.avg_mins_per_task,
                 render: (row) => formatDuration(row.avg_mins_per_task)
+              },
+              {
+                key: 'time',
+                header: 'Tracked Time',
+                sortable: true,
+                value: (row) => row.task_minutes + row.admin_minutes,
+                render: (row) => (
+                  <div>
+                    <div>{formatHours(row.task_minutes + row.admin_minutes)}</div>
+                    <div className="text-xs text-grey-400">
+                      {formatHours(row.task_minutes)} tasks · {formatHours(row.admin_minutes)} admin
+                    </div>
+                  </div>
+                )
               },
               {
                 key: 'clients',

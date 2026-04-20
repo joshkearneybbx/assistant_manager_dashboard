@@ -33,10 +33,12 @@ export function useTasksDetail(filters: FilterState) {
         LEFT JOIN (
           SELECT DISTINCT family_id::text AS family_id, family_name
           FROM v_client_health
+          WHERE family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
         ) ch ON ch.family_id = t.family_id::text
         LEFT JOIN assistants a ON a.id::text = t.assistant_id::text
         WHERE (${assistantId}::text IS NULL OR t.assistant_id::text = ${assistantId}::text)
           AND (${familyId}::text IS NULL OR t.family_id::text = ${familyId}::text)
+          AND t.family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
           AND t.closed_at IS NOT NULL
           AND t.closed_at::date >= ${range.from}::date
           AND t.closed_at::date <= ${range.to}::date

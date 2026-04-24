@@ -173,6 +173,8 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
             last_activity_created: toIsoStringOrNull(row.last_activity_created),
             last_activity_closed_title: row.last_activity_closed_title == null ? null : toStringValue(row.last_activity_closed_title),
             last_activity_created_title: row.last_activity_created_title == null ? null : toStringValue(row.last_activity_created_title),
+            last_task_created: toIsoStringOrNull(row.last_task_created),
+            last_task_created_title: row.last_task_created_title == null ? null : toStringValue(row.last_task_created_title),
             recent_excluded_closure_titles: normalizeStringArray(row.recent_excluded_closure_titles),
             recent_excluded_closure_count: normalizeInt(row.recent_excluded_closure_count),
             recent_recurring_closure_titles: normalizeStringArray(row.recent_recurring_closure_titles),

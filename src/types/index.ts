@@ -24,8 +24,10 @@ export interface ClientHealthRow {
   flex_tasks_used?: number;
   last_activity_closed: string | null;
   last_activity_created: string | null;
+  last_task_created: string | null;
   last_activity_closed_title: string | null;
   last_activity_created_title: string | null;
+  last_task_created_title: string | null;
   recent_excluded_closure_titles: string[];
   recent_excluded_closure_count: number;
   recent_recurring_closure_titles: string[];

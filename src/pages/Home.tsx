@@ -151,8 +151,8 @@ function NeedsAttentionCard({
   const heading = client.health_status === 'Red' ? 'Why is this Red?' : 'Why is this Amber?';
   const explainer =
     client.health_status === 'Red'
-      ? "Red means no tasks have been closed in the last 7 days. Engagement, Marketing, and recurring tasks don't affect this."
-      : "Amber means closures are up to date, but no new tasks have come in for 7+ days. Engagement, Marketing, and recurring tasks don't count.";
+      ? "Red means the client hasn't sent in a new task in 7+ days. Engagement, Marketing, Initiative, and recurring tasks don't count toward this."
+      : "Amber means the client hasn't sent in a new task in 5–6 days. Engagement, Marketing, Initiative, and recurring tasks don't count toward this.";
   const excludedSummary = formatExcludedClosureSummary(
     client.recent_excluded_closure_count,
     client.recent_excluded_closure_titles
@@ -217,8 +217,8 @@ function NeedsAttentionCard({
             />
             <ReasonLine
               label="Last new task"
-              date={client.last_activity_created}
-              title={client.last_activity_created_title}
+              date={client.last_task_created}
+              title={client.last_task_created_title}
               emptyText="No tasks have ever been created for this client."
             />
             {excludedSummary ? <p className="text-xs leading-5 text-grey-400">{excludedSummary}</p> : null}

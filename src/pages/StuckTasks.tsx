@@ -20,6 +20,11 @@ const taskStatusOptions = [
 const selectBase =
   'h-10 appearance-none rounded-md border border-sand-300 bg-white bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2716%27%20height%3D%2716%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23696968%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27m6%209%206%206%206-6%27/%3E%3C/svg%3E")] bg-[length:16px] bg-[right_8px_center] bg-no-repeat pl-3 pr-8 text-sm text-base-black focus:border-assistant-dark focus:outline-none focus:ring-2 focus:ring-assistant-dark/20';
 
+function formatTaskStatus(status: string | null | undefined): string {
+  if (!status) return '';
+  return status.replace(/^\d+(\.\d+)?\.\s*/, '');
+}
+
 export function StuckTasks() {
   const filtersApi = useOutletContext<UseFiltersResult>();
   const { filters } = filtersApi;
@@ -70,7 +75,7 @@ export function StuckTasks() {
               { key: 'client', header: 'Client', render: (row) => row.family_name, sortable: true, value: (row) => row.family_name },
               { key: 'assistant', header: 'Assistant', render: (row) => row.assistant_name, sortable: true, value: (row) => row.assistant_name },
               { key: 'days', header: 'Days Since Update', render: (row) => row.days_since_update, sortable: true, value: (row) => row.days_since_update },
-              { key: 'taskStatus', header: 'Task Status', render: (row) => row.task_status, sortable: true, value: (row) => row.task_status },
+              { key: 'taskStatus', header: 'Task Status', render: (row) => formatTaskStatus(row.task_status), sortable: true, value: (row) => row.task_status },
               { key: 'state', header: 'State', render: (row) => row.task_state },
               { key: 'category', header: 'Category', render: (row) => row.category ?? '-' }
             ]}

@@ -6,6 +6,7 @@ import { Capacity } from './pages/Capacity';
 import { Clients } from './pages/Clients';
 import { StuckTasks } from './pages/StuckTasks';
 import { Journal } from './pages/Journal';
+import { Analytics } from './pages/Analytics';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/clients" element={<Clients />} />
         <Route path="/stuck-tasks" element={<StuckTasks />} />
         <Route path="/journal" element={<Journal />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

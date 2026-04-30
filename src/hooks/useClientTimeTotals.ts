@@ -55,10 +55,6 @@ export function useClientTimeTotals(filters: FilterState) {
             AND COALESCE(t.family_id::text, tp.family_id::text) NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND te.start_time::date >= ${range.from}::date
             AND te.start_time::date <= ${range.to}::date
-            AND (
-              t.source_detailed IS NULL
-              OR t.source_detailed NOT IN ('Engagement', 'Marketing')
-            )
           GROUP BY COALESCE(t.family_id::text, tp.family_id::text), ch.family_name
         `) as Record<string, unknown>[];
       } catch {
@@ -84,10 +80,6 @@ export function useClientTimeTotals(filters: FilterState) {
               AND COALESCE(t.family_id::text, tp.family_id::text) NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
               AND te.entry_date::date >= ${range.from}::date
               AND te.entry_date::date <= ${range.to}::date
-              AND (
-                t.source_detailed IS NULL
-                OR t.source_detailed NOT IN ('Engagement', 'Marketing')
-              )
             GROUP BY COALESCE(t.family_id::text, tp.family_id::text), ch.family_name
           `) as Record<string, unknown>[];
         } catch {
@@ -112,10 +104,6 @@ export function useClientTimeTotals(filters: FilterState) {
               AND COALESCE(t.family_id::text, tp.family_id::text) NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
               AND te.date::date >= ${range.from}::date
               AND te.date::date <= ${range.to}::date
-              AND (
-                t.source_detailed IS NULL
-                OR t.source_detailed NOT IN ('Engagement', 'Marketing')
-              )
             GROUP BY COALESCE(t.family_id::text, tp.family_id::text), ch.family_name
           `) as Record<string, unknown>[];
         }

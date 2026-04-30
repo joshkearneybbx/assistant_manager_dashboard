@@ -13,7 +13,8 @@ const navItems = [
   { to: '/journal', label: 'Journal', icon: BookOpen },
   { to: '/capacity', label: 'Capacity', icon: Gauge },
   { to: '/clients', label: 'Clients', icon: HeartPulse },
-  { to: '/stuck-tasks', label: 'Stuck', icon: Clock3 }
+  { to: '/stuck-tasks', label: 'Stuck', icon: Clock3 },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3 }
 ];
 
 export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {

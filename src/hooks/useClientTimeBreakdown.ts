@@ -27,15 +27,6 @@ export function useClientTimeBreakdown(filters: FilterState, familyId?: string) 
             AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND entry_date::date >= ${range.from}::date
             AND entry_date::date <= ${range.to}::date
-            AND EXISTS (
-              SELECT 1
-              FROM tasks t
-              WHERE t.id::text = task_id::text
-                AND (
-                  t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
-                )
-            )
           GROUP BY family_id, category
           ORDER BY minutes DESC
         `) as Record<string, unknown>[];
@@ -56,15 +47,6 @@ export function useClientTimeBreakdown(filters: FilterState, familyId?: string) 
             AND family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
             AND entry_date::date >= ${range.from}::date
             AND entry_date::date <= ${range.to}::date
-            AND EXISTS (
-              SELECT 1
-              FROM tasks t
-              WHERE t.id::text = task_id::text
-                AND (
-                  t.source_detailed IS NULL
-                  OR t.source_detailed NOT IN ('Engagement', 'Marketing')
-                )
-            )
           GROUP BY family_id, category
           ORDER BY minutes DESC
         `) as Record<string, unknown>[];

@@ -6,6 +6,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { ErrorState } from '../components/ui/ErrorState';
 import { SkeletonStatCards, SkeletonTable } from '../components/ui/Skeleton';
 import { StatCard } from '../components/ui/StatCard';
+import { FlexTaskPill, FlexTravelTaskPill, isFlexClient } from '../components/ui/FlexUsagePills';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useClientHealth } from '../hooks/useClientHealth';
 import { useClientTimeBreakdown } from '../hooks/useClientTimeBreakdown';
@@ -30,12 +31,6 @@ function parseCategoryBadge(value: string | null): { emoji: string; label: strin
     emoji,
     label: toSubcategoryLabel(value)
   };
-}
-
-function flexUsageClass(used: number): string {
-  if (used >= 13) return 'border-status-purple bg-status-purple-light text-status-purple';
-  if (used >= 9) return 'border-status-orange bg-status-orange-light text-status-orange-text';
-  return 'border-status-green bg-status-green-light text-status-green';
 }
 
 const recentTaskDateFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -156,9 +151,17 @@ export function Clients() {
 
                 const clientRecentTasks =
                   expandedFamilyId === row.family_id ? (recentTasks.data ?? []) : [];
+                const isFlex = isFlexClient(row);
 
                 return (
                   <div className="max-h-[70vh] space-y-4 overflow-y-auto p-2">
+                    {isFlex ? (
+                      <div className="flex flex-wrap items-center gap-2 rounded-md border border-sand-300 bg-sand-100 px-3 py-2">
+                        <span className="text-xs font-semibold text-base-black">Flex usage</span>
+                        <FlexTaskPill row={row} />
+                        <FlexTravelTaskPill row={row} />
+                      </div>
+                    ) : null}
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <div>
                         <h3 className="mb-2 text-sm font-semibold text-base-black">Time by Category</h3>
@@ -274,48 +277,30 @@ export function Clients() {
                   header: 'Plan',
                   render: (row) => {
                     const planName = row.subscription_type ?? row.contract ?? '-';
-                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
 
-                    if (!isFlexClient) return planName;
-
-                    const usage = row.flex_tasks_used ?? 0;
-                    const badgeClass = flexUsageClass(usage);
+                    if (!isFlexClient(row)) return planName;
 
                     return (
                       <div className="inline-flex items-center gap-2">
                         <span>{planName}</span>
-                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass}`}>
-                          {usage}/15
-                        </span>
+                        <FlexTaskPill row={row} />
                       </div>
                     );
                   }
                 },
                 {
                   key: 'active',
-                  header: 'Active Tasks',
-                  render: (row) => {
-                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 15` : row.active_tasks;
-                  },
+                  header: 'Active / Travel',
+                  render: (row) => (isFlexClient(row) ? <FlexTravelTaskPill row={row} /> : row.active_tasks),
                   sortable: true,
-                  value: (row) => {
-                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-                    return isFlexClient ? row.flex_tasks_used ?? 0 : row.active_tasks;
-                  }
+                  value: (row) => (isFlexClient(row) ? row.flex_travel_tasks_used ?? 0 : row.active_tasks)
                 },
                 {
                   key: 'completed',
                   header: 'Completed (period)',
-                  render: (row) => {
-                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-                    return isFlexClient ? `${row.flex_tasks_used ?? 0} / 15` : completedByClient[row.family_id] ?? 0;
-                  },
+                  render: (row) => isFlexClient(row) ? `${row.flex_tasks_used ?? 0}/${row.flex_task_limit ?? 0}` : completedByClient[row.family_id] ?? 0,
                   sortable: true,
-                  value: (row) => {
-                    const isFlexClient = row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-                    return isFlexClient ? row.flex_tasks_used ?? 0 : completedByClient[row.family_id] ?? 0;
-                  }
+                  value: (row) => isFlexClient(row) ? row.flex_tasks_used ?? 0 : completedByClient[row.family_id] ?? 0
                 },
                 { key: 'last', header: 'Last Task', render: (row) => daysAgo(row.days_since_last_task), sortable: true, value: (row) => row.days_since_last_task ?? 9999 },
                 {

@@ -22,6 +22,9 @@ export interface ClientHealthRow {
   days_since_last_completion?: number | null;
   health_status: HealthStatus;
   flex_tasks_used?: number;
+  flex_task_limit: number;
+  flex_travel_task_limit: number;
+  flex_travel_tasks_used: number;
   last_activity_closed: string | null;
   last_activity_created: string | null;
   last_task_created: string | null;

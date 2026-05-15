@@ -78,7 +78,35 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
       let baseRows: Record<string, unknown>[];
       try {
         baseRows = (await sql`
-          SELECT *
+          SELECT
+            family_id,
+            family_name,
+            assistant_id,
+            assistant_name,
+            contract,
+            subscription_type,
+            life_transitions,
+            life_transition_icons,
+            active_tasks,
+            days_since_last_task,
+            days_since_last_completion,
+            health_status,
+            flex_tasks_used,
+            flex_task_limit,
+            flex_travel_task_limit,
+            flex_travel_tasks_used,
+            last_task_at,
+            last_activity_at,
+            last_activity_closed,
+            last_activity_created,
+            last_activity_closed_title,
+            last_activity_created_title,
+            last_task_created,
+            last_task_created_title,
+            recent_excluded_closure_titles,
+            recent_excluded_closure_count,
+            recent_recurring_closure_titles,
+            recent_recurring_closure_count
           FROM v_client_health
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
@@ -87,7 +115,35 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
         `) as Record<string, unknown>[];
       } catch {
         baseRows = (await sql`
-          SELECT *
+          SELECT
+            family_id,
+            family_name,
+            assistant_id,
+            assistant_name,
+            contract,
+            contract AS subscription_type,
+            life_transitions,
+            life_transition_icons,
+            active_tasks,
+            days_since_last_task,
+            days_since_last_completion,
+            health_status,
+            flex_tasks_used,
+            0::integer AS flex_task_limit,
+            0::integer AS flex_travel_task_limit,
+            0::integer AS flex_travel_tasks_used,
+            last_task_at,
+            last_activity_at,
+            last_activity_closed,
+            last_activity_created,
+            last_activity_closed_title,
+            last_activity_created_title,
+            last_task_created,
+            last_task_created_title,
+            recent_excluded_closure_titles,
+            recent_excluded_closure_count,
+            recent_recurring_closure_titles,
+            recent_recurring_closure_count
           FROM v_client_health
           WHERE (${assistantId}::text IS NULL OR assistant_id::text = ${assistantId}::text)
             AND (${familyId}::text IS NULL OR family_id::text = ${familyId}::text)
@@ -169,6 +225,9 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
             days_since_last_completion: toNullableDays(row.days_since_last_completion),
             health_status: normalizeHealthStatus(row.health_status),
             flex_tasks_used: row.flex_tasks_used == null ? 0 : toNumber(row.flex_tasks_used),
+            flex_task_limit: row.flex_task_limit == null ? 0 : toNumber(row.flex_task_limit),
+            flex_travel_task_limit: row.flex_travel_task_limit == null ? 0 : toNumber(row.flex_travel_task_limit),
+            flex_travel_tasks_used: row.flex_travel_tasks_used == null ? 0 : toNumber(row.flex_travel_tasks_used),
             last_activity_closed: toIsoStringOrNull(row.last_activity_closed),
             last_activity_created: toIsoStringOrNull(row.last_activity_created),
             last_activity_closed_title: row.last_activity_closed_title == null ? null : toStringValue(row.last_activity_closed_title),

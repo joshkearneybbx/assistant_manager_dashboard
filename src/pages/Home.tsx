@@ -5,6 +5,7 @@ import { FilterBar } from '../components/layout/FilterBar';
 import { AlertCard } from '../components/ui/AlertCard';
 import { DataTable } from '../components/ui/DataTable';
 import { ErrorState } from '../components/ui/ErrorState';
+import { FlexTaskPill, FlexTravelTaskPill, isFlexClient } from '../components/ui/FlexUsagePills';
 import { SkeletonAlertCards, SkeletonTable } from '../components/ui/Skeleton';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { useClientHealth } from '../hooks/useClientHealth';
@@ -131,10 +132,6 @@ function ReasonLine({
   );
 }
 
-function isFlexClient(row: { subscription_type?: string | null; contract: string | null }): boolean {
-  return row.subscription_type === 'Flex' || row.contract === 'BlckBx Flex';
-}
-
 function NeedsAttentionCard({
   client,
   isOpen,
@@ -174,7 +171,13 @@ function NeedsAttentionCard({
             : `${client.days_since_last_task} day${client.days_since_last_task === 1 ? '' : 's'} since last task`}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        {isFlex ? (
+          <>
+            <FlexTaskPill row={client} />
+            <FlexTravelTaskPill row={client} />
+          </>
+        ) : null}
         {isExpandable ? (
           <ChevronDown
             size={16}

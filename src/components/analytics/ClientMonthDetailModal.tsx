@@ -1,5 +1,7 @@
 import { Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { FlexTaskPill, FlexTravelTaskPill, isFlexClient } from '../ui/FlexUsagePills';
+import { useClientHealth } from '../../hooks/useClientHealth';
 import { useClientMonthDetail, type ClientMonthDetailRow } from '../../hooks/useClientMonthDetail';
 import { formatDuration } from '../../lib/format';
 
@@ -326,8 +328,16 @@ export function ClientMonthDetailModal({
   onClose
 }: ClientMonthDetailModalProps) {
   const detail = useClientMonthDetail(familyId, month);
+  const clientHealth = useClientHealth({
+    period: 'all_time',
+    assistant: [],
+    client: [familyId],
+    contract: [],
+    status: []
+  });
   const [activeTab, setActiveTab] = useState<Tab>('category');
   const rows = detail.data ?? [];
+  const healthRow = clientHealth.data?.[0];
   const derivedTeamInitiatedCount = rows.filter((row) => isTeamInitiatedSource(row.source_detailed)).length;
   const teamInitiatedCount = tasksClosedTeamInitiated ?? derivedTeamInitiatedCount;
   const totalTasks = rows.length;
@@ -362,7 +372,15 @@ export function ClientMonthDetailModal({
             <X size={20} />
           </button>
           <div className="pr-10">
-            <h2 className="text-2xl font-bold text-base-black">{clientName}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-bold text-base-black">{clientName}</h2>
+              {healthRow && isFlexClient(healthRow) ? (
+                <>
+                  <FlexTaskPill row={healthRow} />
+                  <FlexTravelTaskPill row={healthRow} />
+                </>
+              ) : null}
+            </div>
             <p className="mt-1 text-sm text-grey-400">{monthLabel}</p>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

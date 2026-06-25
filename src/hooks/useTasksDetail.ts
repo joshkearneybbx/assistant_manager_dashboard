@@ -45,6 +45,7 @@ export function useTasksDetail(filters: FilterState) {
           AND (
             t.source_detailed IS NULL
             OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
+            OR (t.source_detailed IN ('Initiative', 'Engagement') AND t.engagement_successful = TRUE)
           )
         ORDER BY t.closed_at DESC
       `) as Record<string, unknown>[];

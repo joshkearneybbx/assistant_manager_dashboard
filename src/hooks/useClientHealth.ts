@@ -167,7 +167,8 @@ export function useClientHealth(filters: FilterState, options?: UseClientHealthO
         FROM tasks t
         WHERE (
           t.source_detailed IS NULL
-          OR t.source_detailed NOT IN ('Engagement', 'Marketing')
+          OR t.source_detailed NOT IN ('Engagement', 'Marketing', 'Initiative')
+          OR (t.source_detailed IN ('Initiative', 'Engagement') AND t.engagement_successful = TRUE)
         )
         AND t.family_id::text NOT IN ('recRpXW7Q0aAMnbht', 'recWsSUu7Z7RfCLo9', 'recVjs2tfhrs6wPyQ', 'recxXHObMiPAJk5yn')
         GROUP BY t.family_id::text

@@ -148,8 +148,8 @@ function NeedsAttentionCard({
   const heading = client.health_status === 'Red' ? 'Why is this Red?' : 'Why is this Amber?';
   const explainer =
     client.health_status === 'Red'
-      ? "Red means the client hasn't sent in a new task in 7+ days. Engagement, Marketing, Initiative, and recurring tasks don't count toward this."
-      : "Amber means the client hasn't sent in a new task in 5–6 days. Engagement, Marketing, Initiative, and recurring tasks don't count toward this.";
+      ? "Red means no client tasks have been closed in the last 7 days. Marketing and recurring tasks never count, and Initiative or Engagement tasks only count once they're marked Engagement Successful."
+      : "Amber means closures are up to date, but no new client tasks have come in for 7+ days. Marketing and recurring tasks never count, and Initiative or Engagement tasks only count once they're marked Engagement Successful.";
   const excludedSummary = formatExcludedClosureSummary(
     client.recent_excluded_closure_count,
     client.recent_excluded_closure_titles
